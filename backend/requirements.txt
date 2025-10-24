@@ -1,0 +1,11 @@
+Flask==3.0.3
+Flask-CORS==4.0.1
+python-dotenv==1.0.1
+replicate==0.25.1
+gtts==2.5.0
+edge-tts>=7.2.3
+openai>=1.30.0
+elevenlabs==0.2.26
+moviepy==1.0.3
+requests==2.31.0
+Pillow==10.2.0
