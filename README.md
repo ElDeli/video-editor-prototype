@@ -8,6 +8,40 @@
 
 ---
 
+## ⚠️ **WICHTIG: PROJEKT-STRUKTUR**
+
+**DIESES PROJEKT HAT ZWEI LOCATIONS:**
+
+1. **ORIGINAL (für Deployment):**
+   ```
+   /Users/marcoglamngiw/video_editor_prototype/
+   ```
+   - ✅ Hat Git Repository (.git)
+   - ✅ Verbunden mit GitHub: https://github.com/ElDeli/video-editor-prototype
+   - ✅ Verbunden mit Railway: Video-Editor-Prototype
+   - 🚀 **Hier wird deployed!**
+
+2. **ARBEITSKOPIE (für lokale Tests):**
+   ```
+   ~/Library/CloudStorage/Dropbox/Social Media/video_editor_prototype/
+   ```
+   - ⚠️ Keine Git-Verbindung
+   - ✅ Lokale Entwicklung und Tests
+   - ✅ Startet mit `start_all.command`
+
+**DEPLOYMENT WORKFLOW:**
+1. Entwickle in Dropbox-Kopie ODER Original
+2. Kopiere Änderungen zum Original (`/Users/marcoglamngiw/video_editor_prototype/`)
+3. Git commit & push
+4. `railway up` für Deployment
+
+**RAILWAY PROJEKT:**
+- Projekt: `Video-Editor-Prototype`
+- GitHub: Automatisch deployed bei Git Push
+- CLI: `cd /Users/marcoglamngiw/video_editor_prototype && railway up`
+
+---
+
 ## ✨ Key Features
 
 ### 🎨 **7 AI Image Models**
@@ -308,8 +342,30 @@ Proprietary - Video Editor Prototype Team
 
 ---
 
+---
+
+## 📍 Quick Reference
+
+### System URLs
+- **Local Development:** http://localhost:5001
+- **Railway Production:** ❌ Not deployed (Project linked but no service)
+
+### Status (Last Tested: 2025-10-25)
+- ✅ **localhost:5001** - All endpoints operational
+- ✅ **API Endpoints** - 35+ routes tested and working
+- ✅ **Database** - 839+ projects, 4 tables operational
+- ✅ **Hybrid Storage** - Dropbox integration working (local + API)
+- ⚠️ **Railway Deployment** - Project linked but service not deployed
+
+### Documentation
+- **Complete Path Reference:** `../COMPLETE_PATH_DOCUMENTATION.md` - Single source of truth for all paths, APIs, and deployments
+- **Architecture Details:** `ARCHITECTURE_ANALYSIS_COMPLETE.md` - 1,133 lines of complete system analysis
+- **API Reference:** `QUICK_API_REFERENCE.md` - All endpoints with curl examples
+
+---
+
 **Version:** 1.0.0
-**Status:** ✅ Production Ready
-**Last Updated:** 2025-01-24
+**Status:** ✅ Production Ready (Local Development)
+**Last Updated:** 2025-10-25 09:00 UTC
 
 Made with ❤️ for the Sternzeichen Automation System

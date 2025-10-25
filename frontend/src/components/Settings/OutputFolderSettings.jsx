@@ -149,6 +149,23 @@ function OutputFolderSettings({ isOpen, onClose }) {
         {/* Folders List */}
         <div>
           <h3 className="text-lg font-medium mb-3">Configured Folders</h3>
+
+          {/* Info: Predefined Dropbox Folders */}
+          {folders.length > 0 && folders.some(f => f.path && f.path.includes('Dropbox')) && (
+            <div className="mb-4 p-3 bg-blue-900 bg-opacity-20 border border-blue-600 rounded-lg text-sm">
+              <div className="flex items-start gap-2">
+                <FolderOpen className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
+                <div>
+                  <p className="font-medium text-blue-300">Dropbox Output Folders Active</p>
+                  <p className="text-gray-400 mt-1">
+                    Videos werden automatisch in Dropbox-Ordner gespeichert.
+                    Funktioniert auf Railway und lokal!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {loading && folders.length === 0 ? (
             <div className="text-center py-8 text-gray-400">Loading...</div>
           ) : folders.length === 0 ? (
