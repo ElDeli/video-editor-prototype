@@ -182,6 +182,8 @@ class SimpleVideoGenerator:
             '-i', str(img_path),
             '-i', str(audio_path),
             '-c:v', 'libx264',
+            '-g', '30',  # Keyframe every 30 frames (1 sec) for smooth scrubbing
+            '-keyint_min', '30',  # Minimum keyframe interval
             '-t', str(video_duration),
             '-pix_fmt', 'yuv420p',
         ]
