@@ -149,8 +149,9 @@ def bulk_add_scenes(project_id):
             full_script = translation_service.translate(full_script, target_language)
             print("✓ Translation complete\n")
 
-        # Use keyword extractor for visual storytelling
-        visual_scenes = keyword_extractor.extract_visual_scenes(full_script)
+        # Use keyword extractor for visual storytelling with topic context
+        topic = project.get('name', '')  # Project name provides thematic context
+        visual_scenes = keyword_extractor.extract_visual_scenes(full_script, topic=topic)
 
         # Convert to database format and add
         created_scenes = []
