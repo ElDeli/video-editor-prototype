@@ -276,7 +276,7 @@ def generate_preview(project_id):
         video_speed = project.get('video_speed', 1.0)
 
         # Get AI image model from project (default to flux-schnell - fast & cheap)
-        ai_image_model = project.get('ai_image_model', 'flux-schnell')
+        ai_image_model = project.get('ai_image_model', 'flux-dev')  # Changed default from flux-schnell to flux-dev
 
         # Generate preview
         result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model)
@@ -325,7 +325,7 @@ def export_video(project_id):
         background_music_volume = project.get('background_music_volume', 7)
         target_language = project.get('target_language', 'auto')
         video_speed = project.get('video_speed', 1.0)
-        ai_image_model = project.get('ai_image_model', 'flux-schnell')
+        ai_image_model = project.get('ai_image_model', 'flux-dev')  # Changed default from flux-schnell to flux-dev
 
         # Generate export video (full resolution)
         result = preview_gen.generate_preview(
