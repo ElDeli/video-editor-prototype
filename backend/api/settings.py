@@ -6,29 +6,29 @@ import os
 settings_bp = Blueprint('settings', __name__)
 db = DatabaseManager()
 
-# Dropbox Output Base Path (works on both Railway and Local)
-DROPBOX_OUTPUT_BASE = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_uploads")
+# Dropbox Output Base Path (integrated with Sternzeichen_Automation upload system)
+DROPBOX_OUTPUT_BASE = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output")
 
-# Predefined Output Folders for Dropbox
+# Predefined Output Folders for Dropbox (shared with upload_poller.py)
 PREDEFINED_FOLDERS = [
     {
         'name': 'Instagram Reels',
-        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'instagram'),
-        'description': 'Videos für Instagram Reels (9:16)'
+        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'viral_autonomous'),
+        'description': 'Videos für Instagram Reels (9:16) - Auto-Upload Queue'
     },
     {
         'name': 'YouTube Shorts',
-        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'youtube'),
-        'description': 'Videos für YouTube Shorts (9:16)'
+        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'horoskop_content'),
+        'description': 'Videos für YouTube Shorts (9:16) - Auto-Upload Queue'
     },
     {
         'name': 'TikTok',
         'path': os.path.join(DROPBOX_OUTPUT_BASE, 'tiktok'),
-        'description': 'Videos für TikTok (9:16)'
+        'description': 'Videos für TikTok (9:16) - Auto-Upload Queue'
     },
     {
         'name': 'General Upload Queue',
-        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'general'),
+        'path': os.path.join(DROPBOX_OUTPUT_BASE, 'user_uploads'),
         'description': 'Allgemeine Upload-Warteschlange'
     }
 ]
