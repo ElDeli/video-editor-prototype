@@ -363,7 +363,7 @@ def download_video(project_id):
         resolution = request.args.get('resolution', '1080p')
 
         # Build video path (check Dropbox location first, then local)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews")
         video_filename = f"video_{project_id}_{resolution}.mp4"
 
         # Try Dropbox location first (unified path)
@@ -416,7 +416,7 @@ def upload_to_queue(project_id):
             return jsonify({'error': 'No output folder specified or default folder not set'}), 400
 
         # Find source video file
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews")
         video_filename = f"video_{project_id}_{resolution}.mp4"
         source_path = os.path.join(dropbox_path, video_filename)
 

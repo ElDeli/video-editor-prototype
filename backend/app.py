@@ -70,7 +70,7 @@ def health_check():
 def serve_preview(filename):
     """Serve generated preview videos"""
     # Try Dropbox location first (Mac local environment)
-    dropbox_previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews'))
+    dropbox_previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews'))
 
     if dropbox_previews_dir.exists() and (dropbox_previews_dir / filename).exists():
         return send_from_directory(dropbox_previews_dir, filename)
