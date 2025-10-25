@@ -18,7 +18,22 @@ from api.music import music_bp
 from api.settings import settings_bp
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS for iframe embedding + direct access
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://app.momentummind.de",
+            "https://video-editor.momentummind.de",
+            "https://video-editor-prototype-production.up.railway.app",
+            "http://localhost:3000",
+            "http://localhost:8080"
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # Initialize database
 db_manager = DatabaseManager()
