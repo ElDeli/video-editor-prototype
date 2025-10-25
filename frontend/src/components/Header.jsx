@@ -276,7 +276,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {/* Voice Selector */}
               <VoiceSelector
                 selectedVoice={selectedVoice}
@@ -289,9 +289,9 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 value={targetLanguage}
                 onChange={handleLanguageChange}
                 disabled={!project || loading}
-                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
               >
-                <option value="auto">🌐 Auto (No Translation)</option>
+                <option value="auto">🌐 Auto</option>
                 <option value="de">🇩🇪 Deutsch</option>
                 <option value="en">🇬🇧 English</option>
                 <option value="es">🇪🇸 Español</option>
@@ -306,12 +306,12 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 <option value="zh">🇨🇳 中文</option>
               </select>
 
-              {/* AI Image Model Selector */}
+              {/* AI Image Model Selector - WIDER for price visibility */}
               <select
                 value={aiImageModel}
                 onChange={handleAiImageModelChange}
                 disabled={!project || loading}
-                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px]"
                 title="AI Model for Scene Backgrounds"
               >
                 <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
@@ -323,6 +323,9 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 <option value="sdxl">💰 SDXL - $0.003</option>
               </select>
 
+              {/* Divider */}
+              <div className="h-8 w-px bg-gray-600"></div>
+
               {/* Background Music Manager */}
               {project && (
                 <MusicManager
@@ -331,8 +334,8 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 />
               )}
 
-              {/* Font Size Slider */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size for Reels">
+              {/* Font Size Slider - Unified Style */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-dark border border-gray-600 rounded-lg" title="Text Size for Reels">
                 <span className="text-sm text-gray-400">📝</span>
                 <input
                   type="range"
