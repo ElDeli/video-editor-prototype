@@ -30,20 +30,34 @@ class DropboxStorage:
         print(f"📁 Storage Mode: {'LOCAL FILESYSTEM' if self.use_local else 'DROPBOX API'}")
 
     def _init_dropbox_api(self):
-        """Initialize Dropbox API client (Railway environment)"""
+        """Initialize Dropbox API client (Railway environment) with auto-refresh"""
         if not DROPBOX_AVAILABLE:
             print("⚠️ Warning: Dropbox SDK not available")
             return
 
         try:
             access_token = os.getenv('DROPBOX_ACCESS_TOKEN')
+            refresh_token = os.getenv('DROPBOX_REFRESH_TOKEN')
+            app_key = os.getenv('DROPBOX_APP_KEY')
+            app_secret = os.getenv('DROPBOX_APP_SECRET')
 
             if not access_token:
                 print("⚠️ Warning: DROPBOX_ACCESS_TOKEN not found, API unavailable")
                 return
 
-            self.dbx = dropbox.Dropbox(access_token)
-            print("✅ Dropbox API initialized")
+            # Initialize with auto-refresh if refresh token available
+            if refresh_token and app_key and app_secret:
+                self.dbx = dropbox.Dropbox(
+                    oauth2_access_token=access_token,
+                    oauth2_refresh_token=refresh_token,
+                    app_key=app_key,
+                    app_secret=app_secret
+                )
+                print("✅ Dropbox API initialized with AUTO-REFRESH")
+            else:
+                self.dbx = dropbox.Dropbox(access_token)
+                print("✅ Dropbox API initialized (no auto-refresh - token will expire)")
+
         except Exception as e:
             print(f"⚠️ Dropbox API init failed: {e}")
 
