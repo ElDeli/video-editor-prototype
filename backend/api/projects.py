@@ -362,13 +362,23 @@ def download_video(project_id):
         # Get resolution from query parameter (default 1080p)
         resolution = request.args.get('resolution', '1080p')
 
-        # Build video path
-        preview_dir = os.path.join(os.path.dirname(__file__), '..', 'previews')
+        # Build video path (check Dropbox location first, then local)
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
         video_filename = f"video_{project_id}_{resolution}.mp4"
-        video_path = os.path.join(preview_dir, video_filename)
+
+        # Try Dropbox location first (unified path)
+        video_path = os.path.join(dropbox_path, video_filename)
+
+        # Fallback to local backend/previews if not found in Dropbox
+        if not os.path.exists(video_path):
+            local_preview_dir = os.path.join(os.path.dirname(__file__), '..', 'previews')
+            video_path = os.path.join(local_preview_dir, video_filename)
 
         if not os.path.exists(video_path):
+            print(f"Video not found at: {video_path}", file=sys.stderr)
             return jsonify({'error': f'Video not found. Please export first.'}), 404
+
+        print(f"✓ Serving video from: {video_path}", file=sys.stderr)
 
         # Send file with download prompt
         return send_file(
@@ -380,6 +390,69 @@ def download_video(project_id):
 
     except Exception as e:
         print(f"Error downloading video: {e}", file=sys.stderr)
+        return jsonify({'error': str(e)}), 500
+
+@projects_bp.route('/projects/<int:project_id>/upload-to-queue', methods=['POST'])
+def upload_to_queue(project_id):
+    """Copy video to output folder queue"""
+    try:
+        import shutil
+
+        project = db.get_project(project_id)
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+
+        data = request.get_json() or {}
+        folder_id = data.get('folder_id')
+        resolution = data.get('resolution', '1080p')
+
+        # Get output folder
+        if folder_id:
+            output_folder = db.get_output_folder(folder_id)
+        else:
+            output_folder = db.get_default_output_folder()
+
+        if not output_folder:
+            return jsonify({'error': 'No output folder specified or default folder not set'}), 400
+
+        # Find source video file
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
+        video_filename = f"video_{project_id}_{resolution}.mp4"
+        source_path = os.path.join(dropbox_path, video_filename)
+
+        # Fallback to local if not found
+        if not os.path.exists(source_path):
+            local_preview_dir = os.path.join(os.path.dirname(__file__), '..', 'previews')
+            source_path = os.path.join(local_preview_dir, video_filename)
+
+        if not os.path.exists(source_path):
+            print(f"Video not found at: {source_path}", file=sys.stderr)
+            return jsonify({'error': 'Video not found. Please export first.'}), 404
+
+        # Create destination path
+        destination_folder = output_folder['path']
+        os.makedirs(destination_folder, exist_ok=True)
+
+        # Use project name for destination filename
+        safe_name = "".join(c for c in project['name'] if c.isalnum() or c in (' ', '-', '_')).strip()
+        destination_filename = f"{safe_name}_{resolution}.mp4"
+        destination_path = os.path.join(destination_folder, destination_filename)
+
+        # Copy video to output folder
+        print(f"✓ Copying video from: {source_path}", file=sys.stderr)
+        print(f"✓ To: {destination_path}", file=sys.stderr)
+        shutil.copy2(source_path, destination_path)
+
+        return jsonify({
+            'success': True,
+            'message': f'Video uploaded to {output_folder["name"]}',
+            'destination_path': destination_path,
+            'folder_name': output_folder['name']
+        })
+
+    except Exception as e:
+        import traceback
+        print(f"Upload to queue error: {traceback.format_exc()}", file=sys.stderr)
         return jsonify({'error': str(e)}), 500
 
 @projects_bp.route('/thumbnails/<path:keyword>', methods=['GET'])

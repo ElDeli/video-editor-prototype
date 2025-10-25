@@ -64,6 +64,46 @@ const api = {
   exportVideo: async (projectId, format = '1080p') => {
     const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/export`, { format })
     return response.data
+  },
+
+  // Upload to Queue
+  uploadToQueue: async (projectId, folderId = null, resolution = '1080p') => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/upload-to-queue`, {
+      folder_id: folderId,
+      resolution
+    })
+    return response.data
+  },
+
+  // Settings - Output Folders
+  getOutputFolders: async () => {
+    const response = await axios.get(`${API_BASE_URL}/settings/output-folders`)
+    return response.data
+  },
+
+  addOutputFolder: async (name, path) => {
+    const response = await axios.post(`${API_BASE_URL}/settings/output-folders`, { name, path })
+    return response.data
+  },
+
+  deleteOutputFolder: async (folderId) => {
+    await axios.delete(`${API_BASE_URL}/settings/output-folders/${folderId}`)
+  },
+
+  setDefaultOutputFolder: async (folderId) => {
+    const response = await axios.post(`${API_BASE_URL}/settings/output-folders/${folderId}/set-default`)
+    return response.data
+  },
+
+  getDefaultOutputFolder: async () => {
+    const response = await axios.get(`${API_BASE_URL}/settings/output-folders/default`)
+    return response.data
+  },
+
+  browseFolders: async (path = null) => {
+    const params = path ? { path } : {}
+    const response = await axios.get(`${API_BASE_URL}/settings/browse-folders`, { params })
+    return response.data
   }
 }
 

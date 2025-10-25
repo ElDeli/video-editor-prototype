@@ -78,6 +78,28 @@ class DatabaseManager:
             # Column already exists
             pass
 
+        # Settings table for output folders
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                key TEXT UNIQUE NOT NULL,
+                value TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Output folders table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS output_folders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                path TEXT NOT NULL,
+                is_default INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
         # Scenes table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS scenes (
@@ -362,3 +384,68 @@ class DatabaseManager:
         conn.commit()
         conn.close()
         self.update_project_timestamp(project_id)
+
+    # Output Folders Management
+    def get_output_folders(self):
+        """Get all output folders"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM output_folders ORDER BY is_default DESC, name ASC')
+        folders = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return folders
+
+    def add_output_folder(self, name, path):
+        """Add new output folder"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            INSERT INTO output_folders (name, path, is_default)
+            VALUES (?, ?, 0)
+        ''', (name, path))
+
+        folder_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return self.get_output_folder(folder_id)
+
+    def get_output_folder(self, folder_id):
+        """Get output folder by ID"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM output_folders WHERE id = ?', (folder_id,))
+        folder = cursor.fetchone()
+        conn.close()
+        return dict(folder) if folder else None
+
+    def delete_output_folder(self, folder_id):
+        """Delete output folder"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM output_folders WHERE id = ?', (folder_id,))
+        conn.commit()
+        conn.close()
+
+    def set_default_output_folder(self, folder_id):
+        """Set default output folder"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # Remove default from all folders
+        cursor.execute('UPDATE output_folders SET is_default = 0')
+
+        # Set new default
+        cursor.execute('UPDATE output_folders SET is_default = 1 WHERE id = ?', (folder_id,))
+
+        conn.commit()
+        conn.close()
+
+    def get_default_output_folder(self):
+        """Get default output folder"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM output_folders WHERE is_default = 1 LIMIT 1')
+        folder = cursor.fetchone()
+        conn.close()
+        return dict(folder) if folder else None

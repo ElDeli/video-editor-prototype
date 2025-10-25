@@ -1,9 +1,10 @@
-import { Film, Play, Download, Upload } from 'lucide-react'
+import { Film, Play, Download, Upload, Settings } from 'lucide-react'
 import { useProject } from '../hooks/useProject'
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 import VoiceSelector from './VoiceSelector'
 import MusicManager from './BackgroundMusic/MusicManager'
+import OutputFolderSettings from './Settings/OutputFolderSettings'
 
 function Header({ onPreviewGenerated, isEmbedded = false }) {
   const { project, loading, scenes, updateScenesFromPreview, fetchProject } = useProject()
@@ -11,6 +12,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
   const [aiImageModel, setAiImageModel] = useState('flux-schnell')
+  const [showSettings, setShowSettings] = useState(false)
 
   // Update selected voice, language, and AI model when project changes
   useEffect(() => {
@@ -126,6 +128,26 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
     }
   }
 
+  const handleUploadToQueue = async () => {
+    if (!project || scenes.length === 0) return
+
+    const confirmed = confirm(`Upload video to output queue?\n\nProject: ${project.name}\nScenes: ${scenes.length}\n\nThe video will be copied to your configured output folder.`)
+    if (!confirmed) return
+
+    setGenerating(true)
+    try {
+      const result = await api.uploadToQueue(project.id)
+      console.log('Upload to queue complete:', result)
+      alert(`Upload successful!\n\nVideo copied to: ${result.folder_name}\n\nLocation: ${result.destination_path}`)
+    } catch (error) {
+      console.error('Failed to upload to queue:', error)
+      const errorMessage = error.response?.data?.error || 'Failed to upload to queue'
+      alert(`Upload failed: ${errorMessage}\n\nPlease configure an output folder in Settings first.`)
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <header className={`bg-dark border-b border-gray-700 ${isEmbedded ? 'px-3 py-2' : 'px-4 py-2'}`}>
       {/* Compact single-row layout for embedded mode */}
@@ -209,11 +231,20 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
             </button>
 
             <button
+              onClick={handleUploadToQueue}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              disabled={!project || loading}
+              disabled={!project || loading || scenes.length === 0 || generating}
             >
               <Upload className="w-4 h-4" />
               Upload to Queue
+            </button>
+
+            <button
+              onClick={() => setShowSettings(true)}
+              className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+              title="Output Folder Settings"
+            >
+              <Settings className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -307,15 +338,31 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
             </button>
 
             <button
+              onClick={handleUploadToQueue}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!project || loading}
+              disabled={!project || loading || scenes.length === 0 || generating}
             >
               <Upload className="w-4 h-4" />
               Upload to Queue
             </button>
+
+            <button
+              onClick={() => setShowSettings(true)}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center gap-2 transition-colors"
+              title="Output Folder Settings"
+            >
+              <Settings className="w-4 h-4" />
+              Settings
+            </button>
           </div>
         </>
       )}
+
+      {/* Settings Modal */}
+      <OutputFolderSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </header>
   )
 }

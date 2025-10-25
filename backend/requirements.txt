@@ -9,4 +9,3 @@ elevenlabs==0.2.26
 moviepy==1.0.3
 requests==2.31.0
 Pillow==10.2.0
-gunicorn==21.2.0

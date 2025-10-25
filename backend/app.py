@@ -15,6 +15,7 @@ from api.tts import tts_bp
 from api.uploads import uploads_bp
 from api.sound_effects import sound_effects_bp
 from api.music import music_bp
+from api.settings import settings_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -31,20 +32,7 @@ app.register_blueprint(tts_bp, url_prefix='/api')
 app.register_blueprint(uploads_bp, url_prefix='/api')
 app.register_blueprint(sound_effects_bp, url_prefix='/api')
 app.register_blueprint(music_bp, url_prefix='/api')
-
-@app.route('/')
-def serve_index():
-    """Serve React frontend"""
-    return send_from_directory('static', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    """Serve static files (React build)"""
-    if os.path.exists(os.path.join('static', path)):
-        return send_from_directory('static', path)
-    else:
-        # For React Router - serve index.html for all non-existent paths
-        return send_from_directory('static', 'index.html')
+app.register_blueprint(settings_bp, url_prefix='/api')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
