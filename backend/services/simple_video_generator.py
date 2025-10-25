@@ -290,32 +290,51 @@ class SimpleVideoGenerator:
 
         draw = ImageDraw.Draw(img)
 
-        # Font
-        try:
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 50)
-        except:
+        # OPTIMIZED FOR REELS: Larger, bolder font (110px instead of 50px)
+        # Try bold fonts with fallbacks for both Mac (local) and Linux (Railway)
+        font_size = 110
+        font_paths = [
+            # Mac fonts
+            "/System/Library/Fonts/Arial Black.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/Supplemental/Impact.ttf",
+            # Linux fonts (Railway/Docker)
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        ]
+
+        font = None
+        for font_path in font_paths:
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", 40)
+                font = ImageFont.truetype(font_path, font_size)
+                print(f"✓ Loaded font: {font_path}", file=sys.stderr, flush=True)
+                break
             except:
-                font = ImageFont.load_default()
+                continue
 
-        # Word wrap
-        wrapped_text = self._wrap_text(text, width - 100, font, draw)
+        if not font:
+            print("⚠️ No system fonts found, using default (will be small!)", file=sys.stderr, flush=True)
+            font = ImageFont.load_default()
 
-        # Center text
+        # Word wrap with more padding for mobile screens
+        wrapped_text = self._wrap_text(text, width - 120, font, draw)
+
+        # Position text in UPPER 40% (Reels best practice - avoid bottom UI overlap)
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         x = (width - text_width) // 2
-        y = (height - text_height) // 2
+        y = int(height * 0.35) - (text_height // 2)  # Upper 35% instead of center
 
-        # Draw outline
-        for adj_x in [-2, 0, 2]:
-            for adj_y in [-2, 0, 2]:
+        # THICK shadow for better contrast (6px offset for readability)
+        shadow_offset = 6
+        for adj_x in range(-shadow_offset, shadow_offset + 1, 2):
+            for adj_y in range(-shadow_offset, shadow_offset + 1, 2):
                 if adj_x != 0 or adj_y != 0:
                     draw.multiline_text((x + adj_x, y + adj_y), wrapped_text, font=font, fill=(0, 0, 0), align='center')
 
-        # Draw text
+        # Draw main text (white for maximum contrast)
         draw.multiline_text((x, y), wrapped_text, font=font, fill=(255, 255, 255), align='center')
 
         img.save(output_path, 'JPEG', quality=90)
