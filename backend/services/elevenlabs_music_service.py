@@ -5,13 +5,13 @@ AI-powered music generation
 import requests
 import os
 from pathlib import Path
+from services.dropbox_storage import storage
 
 class ElevenLabsMusicService:
     def __init__(self):
         self.api_key = os.getenv('ELEVENLABS_API_KEY', '')
         self.base_url = 'https://api.elevenlabs.io/v1'
-        self.music_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/uploads/music'))
-        self.music_dir.mkdir(parents=True, exist_ok=True)
+        self.music_dir = storage.get_save_dir('uploads/music')
 
     def generate_music(self, text_prompt, duration_seconds=None):
         """
@@ -51,12 +51,12 @@ class ElevenLabsMusicService:
             response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
 
-            # Save audio file
+            # Save audio file using hybrid storage
             filename = self._sanitize_filename(text_prompt) + '.mp3'
-            file_path = self.music_dir / filename
+            rel_path = f'uploads/music/{filename}'
 
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
+            # Save using hybrid storage (local or Dropbox API)
+            file_path = storage.save_file(rel_path, response.content)
 
             print(f"✓ Music saved: {file_path}")
             return str(file_path)

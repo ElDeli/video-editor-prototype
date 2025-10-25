@@ -16,13 +16,12 @@ from services.replicate_image_service import ReplicateImageService
 from services.video_effects import VideoEffects
 from services.elevenlabs_voice_service import ElevenLabsVoiceService
 from services.openai_tts_service import OpenAITTSService
+from services.dropbox_storage import storage
 
 class SimpleVideoGenerator:
     def __init__(self, tts_voice='de-DE-KatjaNeural'):
-        # Output directory for generated videos (centralized in Dropbox)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
-        self.output_dir = Path(dropbox_path)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        # Output directory for generated videos (hybrid storage)
+        self.output_dir = storage.get_save_dir('previews')
 
         self.temp_dir = Path(tempfile.gettempdir()) / "video_editor_simple"
         self.temp_dir.mkdir(exist_ok=True)

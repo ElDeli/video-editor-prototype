@@ -52,12 +52,10 @@ class ElevenLabsSoundService:
             response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
 
-            # Save audio file
+            # Save audio file using hybrid storage
             filename = self._sanitize_filename(text_prompt) + '.mp3'
-            file_path = self.sound_dir / filename
-
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
+            rel_path = f'uploads/sound_effects/{filename}'
+            file_path = storage.save_file(rel_path, response.content)
 
             print(f"✓ Sound effect saved: {file_path}")
             return str(file_path)
