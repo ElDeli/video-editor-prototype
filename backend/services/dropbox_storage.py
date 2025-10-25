@@ -86,25 +86,34 @@ class DropboxStorage:
 
             return str(full_path)
         else:
-            # DROPBOX API (Railway)
+            # DROPBOX API (Railway) + Local Cache
             dropbox_path = f'/Apps/output Horoskop/output/video_editor_prototype/{rel_path}'
 
+            # Save locally in /tmp for immediate access
+            local_cache_path = Path('/tmp/video_editor_cache') / rel_path
+            local_cache_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if isinstance(file_data, bytes):
+                local_cache_path.write_bytes(file_data)
+            else:
+                # Assume file_data is a path to copy from
+                import shutil
+                shutil.copy2(file_data, local_cache_path)
+
+            print(f"💾 Saved to local cache: {local_cache_path}")
+
+            # ALSO upload to Dropbox (for permanent storage)
             if self.dbx:
                 try:
-                    if isinstance(file_data, bytes):
-                        self.dbx.files_upload(file_data, dropbox_path, mode=dropbox.files.WriteMode.overwrite)
-                    else:
-                        # Read file and upload
-                        with open(file_data, 'rb') as f:
-                            self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
-
-                    print(f"✅ Uploaded to Dropbox: {dropbox_path}")
-                    return dropbox_path
+                    with open(local_cache_path, 'rb') as f:
+                        self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+                    print(f"☁️ Uploaded to Dropbox: {dropbox_path}")
                 except Exception as e:
-                    print(f"❌ Dropbox upload failed: {e}")
-                    raise
-            else:
-                raise Exception("Dropbox API not available and no local Dropbox folder found")
+                    print(f"⚠️ Dropbox upload failed (continuing with local cache): {e}")
+                    # Don't raise - we have local cache, that's enough
+
+            # Return LOCAL path so video generation can access it
+            return str(local_cache_path)
 
     def get_save_dir(self, rel_path):
         """
