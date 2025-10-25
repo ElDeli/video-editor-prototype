@@ -8,7 +8,7 @@ from pathlib import Path
 class DropboxStorage:
     def __init__(self):
         # Dropbox base paths
-        self.dropbox_base = '~/Dropbox/Apps/output Horoskop/video_editor_prototype'
+        self.dropbox_base = '~/Dropbox/Apps/output Horoskop/output'
         self.local_dropbox_path = Path(os.path.expanduser(self.dropbox_base))
 
         # Check if local Dropbox folder exists (Mac environment)
@@ -64,7 +64,7 @@ class DropboxStorage:
             return str(full_path)
         else:
             # DROPBOX API (Railway)
-            dropbox_path = f'/Apps/output Horoskop/video_editor_prototype/{rel_path}'
+            dropbox_path = f'/Apps/output Horoskop/output/{rel_path}'
 
             if self.dbx:
                 try:
@@ -108,7 +108,7 @@ class DropboxStorage:
         else:
             if self.dbx:
                 try:
-                    dropbox_path = f'/Apps/output Horoskop/video_editor_prototype/{rel_path}'
+                    dropbox_path = f'/Apps/output Horoskop/output/{rel_path}'
                     self.dbx.files_get_metadata(dropbox_path)
                     return True
                 except:
@@ -121,7 +121,7 @@ class DropboxStorage:
             return (self.local_dropbox_path / rel_path).read_bytes()
         else:
             if self.dbx:
-                dropbox_path = f'/Apps/output Horoskop/video_editor_prototype/{rel_path}'
+                dropbox_path = f'/Apps/output Horoskop/output/{rel_path}'
                 _, response = self.dbx.files_download(dropbox_path)
                 return response.content
             raise Exception("File not accessible")
