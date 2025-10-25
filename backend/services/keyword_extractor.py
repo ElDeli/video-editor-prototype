@@ -379,44 +379,48 @@ class KeywordExtractor:
                 temperatures = [0.3, 0.7, 1.0]  # Conservative, Balanced, Creative
                 keywords = []
 
-                system_prompt = """You are a visual prompt generator for AI image generation.
+                system_prompt = """You are a visual prompt generator for AI image generation (Flux models).
 Your task: Extract the CORE VISUAL CONCEPT from a sentence for creating a CONCRETE, SPECIFIC image.
 
-CRITICAL: Do NOT translate the sentence. Just extract the visual concept in the SAME language as the input.
+🔴 CRITICAL: ALWAYS output in ENGLISH, regardless of input language!
+Flux AI models work BEST with English prompts for highest quality results.
 
 PRIORITY RULES (in order):
 1. CONCRETE elements FIRST: people, objects, animals, places, nature
 2. AVOID abstract concepts (love, time, hope) unless no concrete element exists
 3. Extract the MAIN SUBJECT + ACTION or SETTING
-4. Be hyper-SPECIFIC (not "Licht" but "leuchtendes goldenes Licht durchflutet dunklen Raum")
+4. Be hyper-SPECIFIC (not "light" but "glowing golden light flooding dark room")
 
 Output Rules:
-1. Output ONLY 4-10 words
-2. Use the SAME LANGUAGE as input
-3. Use photographic/cinematic descriptive language
-4. Focus on what CAN BE PHOTOGRAPHED or PAINTED
-5. NO explanations, NO quotes, JUST the visual prompt
+1. Output ONLY 4-10 words in ENGLISH
+2. Use photographic/cinematic descriptive language
+3. Focus on what CAN BE PHOTOGRAPHED or PAINTED
+4. NO explanations, NO quotes, JUST the visual prompt
+5. Keep it natural and concrete (avoid generic adjectives)
 
 Examples:
 
-Input: "Das Licht, das nie erlosch"
-Bad: "ewiges Licht" (too abstract)
-Good: "hell leuchtendes goldenes Licht in dunkler Höhle"
+Input: "Das Licht, das nie erlosch" (German)
+Bad: "eternal light" (too abstract)
+Good: "bright glowing golden light in dark cave"
 
-Input: "Tief im Universum gibt es Sterne, die längst erloschen sind"
-Bad: "tote Sterne" (too generic)
-Good: "verblasste Sterne im tiefen schwarzen Universum"
+Input: "Tief im Universum gibt es Sterne, die längst erloschen sind" (German)
+Bad: "dead stars" (too generic)
+Good: "fading stars in deep black universe"
 
-Input: "Eine Frau entdeckte ein Geheimnis"
-Bad: "Geheimnis" (not visual)
-Good: "Frau öffnet alte geheimnisvolle Truhe"
+Input: "Eine Frau entdeckte ein Geheimnis" (German)
+Bad: "secret" (not visual)
+Good: "woman opening old mysterious chest"
 
-Input: "Scientists discovered a fascinating alpine village"
-Output: "scientists in hiking gear discovering remote alpine village"
+Input: "Klimaforschung & Geoengineering – künstliche Wolken" (German)
+Good: "scientists generating artificial clouds in laboratory"
 
-Input: "Liebe verbindet Menschen über Grenzen hinweg"
-Bad: "Liebe" (too abstract)
-Good: "zwei Menschen halten Hände über Grenze hinweg"
+Input: "Liebe verbindet Menschen über Grenzen hinweg" (German)
+Bad: "love" (too abstract)
+Good: "two people holding hands across border"
+
+Input: "Scientists discovered a fascinating alpine village" (English)
+Good: "scientists in hiking gear discovering remote alpine village"
 """
 
                 print(f"🎨 Generating 3 keyword variations for: '{sentence[:50]}...'")

@@ -33,8 +33,9 @@ class ReplicateImageService:
             'sdxl': 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'  # Legacy
         }
 
-        # Default model (Flux Schnell = Fast & Cheap at $0.003/img)
-        self.default_model = 'flux-schnell'
+        # Default model (Flux Dev = Best balance of quality & speed at $0.025/img)
+        # Changed from flux-schnell ($0.003) for 3x better image quality
+        self.default_model = 'flux-dev'
 
         # German to English keyword translation for better AI results
         self.translations = {
@@ -225,8 +226,13 @@ class ReplicateImageService:
                     "aspect_ratio": "9:16",  # Vertical format for Instagram/TikTok
                     "output_format": "jpg",  # ⭐ JPEG for compatibility with cache system
                     "output_quality": 90,
-                    "prompt_upsampling": True  # ⭐ AUTO-ENHANCE PROMPTS FOR BETTER QUALITY!
+                    "prompt_upsampling": True,  # ⭐ AUTO-ENHANCE PROMPTS FOR BETTER QUALITY!
+                    "safety_tolerance": 2  # ⭐ Less restrictive filtering (1=strict, 6=permissive)
                 }
+
+                # Add guidance for Pro models (not supported on Schnell)
+                if model in ['flux-pro-1.1', 'flux-pro', 'flux-dev']:
+                    input_params["guidance"] = 3.5  # ⭐ Optimal prompt adherence
 
             # Generate image using Replicate
             output = replicate.run(model_id, input=input_params)
@@ -289,10 +295,9 @@ class ReplicateImageService:
                 # Multi-word phrase: enhance with visual descriptors to make it SPECIFIC
                 base_prompt = f"realistic depiction of {base_prompt} cinematic detailed scene"
 
-        # Add style modifiers for better quality and specificity
-        style_suffix = ", highly detailed, photorealistic, dramatic lighting, professional photography, vivid colors, 8k uhd"
-
-        return f"{base_prompt}{style_suffix}"
+        # NO style modifiers needed - Flux prompt_upsampling handles this automatically!
+        # Just return the clean prompt from GPT or translation
+        return base_prompt
 
     def _get_cache_key(self, keyword: str, width: int, height: int, model: str = None) -> str:
         """Generate cache key from parameters"""
