@@ -159,8 +159,25 @@ class ReplicateImageService:
             if storage.file_exists(cache_rel_path):
                 # Get full path for local access
                 cached_path = self.cache_dir / cache_filename
-                print(f"✓ Using cached image for '{keyword}' (model: {model})")
-                return str(cached_path)
+
+                # On Railway: If file exists in Dropbox but not locally, download it
+                if not cached_path.exists():
+                    print(f"📥 Downloading cached image from Dropbox: {cache_filename}")
+                    try:
+                        image_data = storage.get_file_content(cache_rel_path)
+                        cached_path.parent.mkdir(parents=True, exist_ok=True)
+                        cached_path.write_bytes(image_data)
+                        print(f"✓ Downloaded from Dropbox to local cache")
+                    except Exception as e:
+                        print(f"⚠️ Failed to download from Dropbox: {e}")
+                        # Continue to regenerate
+                        pass
+                    else:
+                        print(f"✓ Using cached image for '{keyword}' (model: {model})")
+                        return str(cached_path)
+                else:
+                    print(f"✓ Using cached image for '{keyword}' (model: {model})")
+                    return str(cached_path)
 
             # Translate keyword to English for better results
             prompt = self._create_prompt(keyword)
