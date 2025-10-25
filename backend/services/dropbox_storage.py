@@ -5,6 +5,14 @@ Automatically switches between local filesystem (Mac) and Dropbox API (Railway)
 import os
 from pathlib import Path
 
+# Try to import dropbox SDK (needed for Railway environment)
+try:
+    import dropbox
+    DROPBOX_AVAILABLE = True
+except ImportError:
+    DROPBOX_AVAILABLE = False
+    print("⚠️ Warning: Dropbox SDK not installed")
+
 class DropboxStorage:
     def __init__(self):
         # Dropbox base paths
@@ -23,8 +31,11 @@ class DropboxStorage:
 
     def _init_dropbox_api(self):
         """Initialize Dropbox API client (Railway environment)"""
+        if not DROPBOX_AVAILABLE:
+            print("⚠️ Warning: Dropbox SDK not available")
+            return
+
         try:
-            import dropbox
             access_token = os.getenv('DROPBOX_ACCESS_TOKEN')
 
             if not access_token:
@@ -33,8 +44,6 @@ class DropboxStorage:
 
             self.dbx = dropbox.Dropbox(access_token)
             print("✅ Dropbox API initialized")
-        except ImportError:
-            print("⚠️ Warning: Dropbox SDK not installed")
         except Exception as e:
             print(f"⚠️ Dropbox API init failed: {e}")
 
