@@ -8,6 +8,7 @@ import requests
 from pathlib import Path
 from typing import Optional
 import hashlib
+from services.dropbox_storage import storage
 
 class ReplicateImageService:
     def __init__(self):
@@ -18,10 +19,8 @@ class ReplicateImageService:
         # Set API token for replicate
         os.environ['REPLICATE_API_TOKEN'] = self.api_token
 
-        # Cache directory for generated images (centralized in Dropbox)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/image_cache")
-        self.cache_dir = Path(dropbox_path)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Use hybrid storage for image cache (Dropbox on Mac, /tmp cache on Railway)
+        self.cache_dir = storage.get_save_dir('image_cache')
 
         # Available AI Models - Map from friendly names to Replicate model IDs
         self.models = {
@@ -153,9 +152,13 @@ class ReplicateImageService:
 
             # Check cache first (include model in cache key)
             cache_key = self._get_cache_key(keyword, width, height, model)
-            cached_path = self.cache_dir / f"{cache_key}.jpg"
+            cache_filename = f"{cache_key}.jpg"
+            cache_rel_path = f"image_cache/{cache_filename}"
 
-            if cached_path.exists():
+            # Check if cached image exists (works on both Mac and Railway)
+            if storage.file_exists(cache_rel_path):
+                # Get full path for local access
+                cached_path = self.cache_dir / cache_filename
                 print(f"✓ Using cached image for '{keyword}' (model: {model})")
                 return str(cached_path)
 
@@ -216,12 +219,11 @@ class ReplicateImageService:
                 image_url = output[0] if isinstance(output, list) else output
                 image_data = requests.get(image_url).content
 
-                # Save to cache
-                with open(cached_path, 'wb') as f:
-                    f.write(image_data)
+                # Save to cache using hybrid storage (Dropbox + local cache on Railway)
+                saved_path = storage.save_file(cache_rel_path, image_data)
 
-                print(f"✓ Image generated and cached: {cached_path}")
-                return str(cached_path)
+                print(f"✓ Image generated and cached: {saved_path}")
+                return str(saved_path)
             else:
                 print(f"✗ No image generated for '{keyword}'")
                 return None

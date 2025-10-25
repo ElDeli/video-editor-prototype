@@ -138,6 +138,12 @@ class DropboxStorage:
         if self.use_local:
             return (self.local_dropbox_path / rel_path).exists()
         else:
+            # On Railway: Check local cache first (faster than Dropbox API)
+            local_cache_path = Path('/tmp/video_editor_cache') / rel_path
+            if local_cache_path.exists():
+                return True
+
+            # If not in local cache, check Dropbox
             if self.dbx:
                 try:
                     dropbox_path = f'/Apps/output Horoskop/output/video_editor_prototype/{rel_path}'
