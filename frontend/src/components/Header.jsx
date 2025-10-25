@@ -12,6 +12,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
   const [aiImageModel, setAiImageModel] = useState('flux-dev')  // Changed from flux-schnell for better quality
+  const [fontSize, setFontSize] = useState(80)  // Default font size for Reels (50-120px range)
   const [showSettings, setShowSettings] = useState(false)
 
   // Update selected voice, language, and AI model when project changes
@@ -73,7 +74,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
 
     setGenerating(true)
     try {
-      const result = await api.generatePreview(project.id)
+      const result = await api.generatePreview(project.id, fontSize)
       console.log('Preview generated:', result)
 
       // CRITICAL: Update scenes with actual durations from backend
@@ -107,7 +108,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
     setGenerating(true)
     try {
       // Step 1: Generate the video
-      const result = await api.exportVideo(project.id, '1080p')
+      const result = await api.exportVideo(project.id, '1080p', fontSize)
       console.log('Export complete:', result)
 
       // Step 2: Trigger browser download
@@ -208,6 +209,21 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 onUpdate={() => fetchProject?.(project.id)}
               />
             )}
+
+            {/* Font Size Slider - Compact Inline Control */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size for Reels">
+              <span className="text-xs text-gray-400">📝</span>
+              <input
+                type="range"
+                min="50"
+                max="120"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                disabled={!project || loading}
+              />
+              <span className="text-xs font-mono text-gray-300 w-10">{fontSize}px</span>
+            </div>
           </div>
 
           {/* Right side: Action Buttons */}

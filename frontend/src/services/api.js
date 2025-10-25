@@ -55,14 +55,14 @@ const api = {
   },
 
   // Preview
-  generatePreview: async (projectId) => {
-    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/preview`)
+  generatePreview: async (projectId, fontSize = 80) => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/preview`, { font_size: fontSize })
     return response.data
   },
 
   // Export
-  exportVideo: async (projectId, format = '1080p') => {
-    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/export`, { format })
+  exportVideo: async (projectId, format = '1080p', fontSize = 80) => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/export`, { format, font_size: fontSize })
     return response.data
   },
 

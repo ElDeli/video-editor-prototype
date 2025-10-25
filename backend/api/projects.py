@@ -247,6 +247,10 @@ def generate_preview(project_id):
         if not project:
             return jsonify({'error': 'Project not found'}), 404
 
+        # Get font size from request (default to 80px)
+        data = request.get_json() or {}
+        font_size = data.get('font_size', 80)
+
         # Get all scenes - ALWAYS fresh from database to ensure sound effects are included
         scenes = db.get_project_scenes(project_id)
         if not scenes:
@@ -279,7 +283,7 @@ def generate_preview(project_id):
         ai_image_model = project.get('ai_image_model', 'flux-dev')  # Changed default from flux-schnell to flux-dev
 
         # Generate preview
-        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model)
+        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model, font_size=font_size)
 
         # Update scene durations in database with actual timings from video generation
         if 'scene_timings' in result:
@@ -318,6 +322,7 @@ def export_video(project_id):
 
         data = request.get_json() or {}
         resolution = data.get('resolution', '1080p')
+        font_size = data.get('font_size', 80)
 
         # Get project settings
         tts_voice = project.get('tts_voice', 'de-DE-KatjaNeural')
@@ -337,7 +342,8 @@ def export_video(project_id):
             target_language=target_language,
             video_speed=video_speed,
             ai_image_model=ai_image_model,
-            resolution=resolution
+            resolution=resolution,
+            font_size=font_size
         )
 
         return jsonify({
