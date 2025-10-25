@@ -15,7 +15,7 @@ class PreviewGenerator:
         self.output_dir.mkdir(exist_ok=True)
         self.translation_service = TranslationService()
 
-    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-schnell', resolution='preview', font_size=80):
+    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-dev', resolution='preview', font_size=80):
         """
         Generate preview video from scenes using actual video generation
         """

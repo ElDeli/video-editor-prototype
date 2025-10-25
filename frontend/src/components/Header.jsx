@@ -314,13 +314,13 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="AI Model for Scene Backgrounds"
               >
-                <option value="flux-pro-1.1">🎨 Flux Pro 1.1 - $0.04/img (Best Quality)</option>
-                <option value="flux-pro">🎨 Flux Pro - $0.055/img (Very Good)</option>
-                <option value="flux-dev">🎨 Flux Dev - $0.025/img (Balanced)</option>
-                <option value="flux-schnell">⚡ Flux Schnell - $0.003/img (Fast)</option>
-                <option value="ideogram-v3">📝 Ideogram V3 - $0.09/img (Text in Images)</option>
-                <option value="recraft-v3">🎭 Recraft V3 - $0.04/img (Style Variety)</option>
-                <option value="sdxl">💰 SDXL - $0.003/img (Cheap)</option>
+                <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
+                <option value="flux-pro">🎨 Pro - $0.055</option>
+                <option value="flux-dev">🎨 Dev - $0.025</option>
+                <option value="flux-schnell">⚡ Fast - $0.003</option>
+                <option value="ideogram-v3">📝 Ideogram - $0.09</option>
+                <option value="recraft-v3">🎭 Recraft - $0.04</option>
+                <option value="sdxl">💰 SDXL - $0.003</option>
               </select>
 
               {/* Background Music Manager */}
@@ -330,6 +330,21 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                   onUpdate={() => fetchProject?.(project.id)}
                 />
               )}
+
+              {/* Font Size Slider */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size for Reels">
+                <span className="text-sm text-gray-400">📝</span>
+                <input
+                  type="range"
+                  min="50"
+                  max="120"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  disabled={!project || loading}
+                />
+                <span className="text-sm font-mono text-gray-300 w-12">{fontSize}px</span>
+              </div>
             </div>
           </div>
 

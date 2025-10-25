@@ -74,8 +74,8 @@ def regenerate_scene_image(scene_id):
         if not project:
             return jsonify({'error': 'Project not found'}), 404
 
-        # Get AI model from project (default to flux-schnell - fast & cheap)
-        ai_image_model = project.get('ai_image_model', 'flux-schnell')
+        # Get AI model from project (default to flux-dev - balanced quality)
+        ai_image_model = project.get('ai_image_model', 'flux-dev')
 
         # Add random variation to keyword to force different image generation
         # This ensures we get a NEW image even for the same concept
