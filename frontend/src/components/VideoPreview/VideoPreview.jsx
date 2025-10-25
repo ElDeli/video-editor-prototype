@@ -80,7 +80,9 @@ function VideoPreview({ previewData, seekToScene }) {
         console.warn(`⚠️ Scene ${selectedSceneId} not found in scenes array`)
       }
     }
-  }, [selectedSceneId, scenes, previewData])
+    // ONLY depend on selectedSceneId - scenes/previewData are accessed via closure
+    // This prevents re-running on every render when scenes array reference changes
+  }, [selectedSceneId])
 
   return (
     <div className="h-full flex flex-col p-4">
