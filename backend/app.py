@@ -68,9 +68,19 @@ def health_check():
 
 @app.route('/api/previews/<filename>', methods=['GET'])
 def serve_preview(filename):
-    """Serve generated preview videos from centralized Dropbox location"""
-    previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews'))
-    return send_from_directory(previews_dir, filename)
+    """Serve generated preview videos"""
+    # Try Dropbox location first (Mac local environment)
+    dropbox_previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews'))
+
+    if dropbox_previews_dir.exists() and (dropbox_previews_dir / filename).exists():
+        return send_from_directory(dropbox_previews_dir, filename)
+
+    # Fallback to local backend/previews (Railway environment)
+    local_previews_dir = Path('./previews')
+    if local_previews_dir.exists() and (local_previews_dir / filename).exists():
+        return send_from_directory(local_previews_dir, filename)
+
+    return jsonify({'error': 'Preview video not found'}), 404
 
 @app.errorhandler(404)
 def not_found(error):
