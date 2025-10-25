@@ -11,7 +11,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   const [generating, setGenerating] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
-  const [aiImageModel, setAiImageModel] = useState('flux-schnell')
+  const [aiImageModel, setAiImageModel] = useState('flux-dev')  // Changed from flux-schnell for better quality
   const [showSettings, setShowSettings] = useState(false)
 
   // Update selected voice, language, and AI model when project changes

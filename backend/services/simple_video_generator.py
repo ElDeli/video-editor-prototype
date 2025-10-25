@@ -290,9 +290,9 @@ class SimpleVideoGenerator:
 
         draw = ImageDraw.Draw(img)
 
-        # OPTIMIZED FOR REELS: Larger, bolder font (110px instead of 50px)
+        # OPTIMIZED FOR REELS: Larger, bolder font (sweet spot: 75-85px)
         # Try bold fonts with fallbacks for both Mac (local) and Linux (Railway)
-        font_size = 110
+        font_size = 80  # Balanced: readable but not overwhelming
         font_paths = [
             # Mac fonts
             "/System/Library/Fonts/Arial Black.ttf",
