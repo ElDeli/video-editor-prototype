@@ -34,6 +34,19 @@ app.register_blueprint(sound_effects_bp, url_prefix='/api')
 app.register_blueprint(music_bp, url_prefix='/api')
 app.register_blueprint(settings_bp, url_prefix='/api')
 
+@app.route('/')
+def serve_frontend():
+    """Serve the React frontend"""
+    return send_from_directory('static', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    """Serve static files (JS, CSS, etc.)"""
+    if path and os.path.exists(os.path.join('static', path)):
+        return send_from_directory('static', path)
+    # If file doesn't exist, serve index.html (for React Router)
+    return send_from_directory('static', 'index.html')
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'ok', 'message': 'Video Editor API is running'})
