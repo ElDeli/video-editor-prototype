@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Music, Upload, X, Wand2, Loader, Volume2, Gauge } from 'lucide-react'
 import axios from 'axios'
 
-const API_BASE = 'http://localhost:5001/api'
+const API_BASE = '/api'
 
 export default function MusicManager({ project, onUpdate }) {
     const [showModal, setShowModal] = useState(false)

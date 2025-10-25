@@ -5,7 +5,7 @@ import EffectsPanel from './EffectsPanel'
 import SceneImageUploader from '../SceneImage/SceneImageUploader'
 import axios from 'axios'
 
-const API_BASE = 'http://localhost:5001/api'
+const API_BASE = '/api'
 
 function SceneCard({ scene, index, isSelected, onSelect, onPreviewRegenerated }) {
   const { updateScene, deleteScene, fetchProject } = useProject()
@@ -214,7 +214,7 @@ function SceneCard({ scene, index, isSelected, onSelect, onPreviewRegenerated })
     setIsRegenerating(true)
     try {
       // Step 1: Regenerate image for this scene
-      const response = await fetch(`http://localhost:5001/api/scenes/${scene.id}/regenerate-image`, {
+      const response = await fetch(`${API_BASE}/scenes/${scene.id}/regenerate-image`, {
         method: 'POST'
       })
 
@@ -244,7 +244,7 @@ function SceneCard({ scene, index, isSelected, onSelect, onPreviewRegenerated })
       console.log('🎬 Triggering preview regeneration for project:', projectId)
 
       // Trigger preview regeneration
-      const previewResponse = await fetch(`http://localhost:5001/api/projects/${projectId}/preview`, {
+      const previewResponse = await fetch(`${API_BASE}/projects/${projectId}/preview`, {
         method: 'POST'
       })
 
@@ -280,7 +280,7 @@ function SceneCard({ scene, index, isSelected, onSelect, onPreviewRegenerated })
   const getThumbnailUrl = () => {
     if (scene.background_type === 'keyword' && scene.background_value) {
       // Generate thumbnail URL from backend API with timestamp to force reload
-      return `http://localhost:5001/api/thumbnails/${encodeURIComponent(scene.background_value)}?t=${thumbnailTimestamp}`
+      return `${API_BASE}/thumbnails/${encodeURIComponent(scene.background_value)}?t=${thumbnailTimestamp}`
     }
     return null
   }
