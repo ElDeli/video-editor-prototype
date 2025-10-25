@@ -153,9 +153,9 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
     <header className={`bg-dark border-b border-gray-700 ${isEmbedded ? 'px-3 py-2' : 'px-4 py-2'}`}>
       {/* Compact single-row layout for embedded mode */}
       {isEmbedded ? (
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2">
           {/* Left side: Settings */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
             {/* Voice Selector */}
             <VoiceSelector
               selectedVoice={selectedVoice}
@@ -168,21 +168,21 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               value={targetLanguage}
               onChange={handleLanguageChange}
               disabled={!project || loading}
-              className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="auto">🌐 Auto (No Translation)</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="en">🇬🇧 English</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="pt">🇵🇹 Português</option>
-              <option value="pl">🇵🇱 Polski</option>
-              <option value="nl">🇳🇱 Nederlands</option>
-              <option value="tr">🇹🇷 Türkçe</option>
-              <option value="ru">🇷🇺 Русский</option>
-              <option value="ja">🇯🇵 日本語</option>
-              <option value="zh">🇨🇳 中文</option>
+              <option value="auto">🌐 Auto</option>
+              <option value="de">🇩🇪 DE</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="es">🇪🇸 ES</option>
+              <option value="fr">🇫🇷 FR</option>
+              <option value="it">🇮🇹 IT</option>
+              <option value="pt">🇵🇹 PT</option>
+              <option value="pl">🇵🇱 PL</option>
+              <option value="nl">🇳🇱 NL</option>
+              <option value="tr">🇹🇷 TR</option>
+              <option value="ru">🇷🇺 RU</option>
+              <option value="ja">🇯🇵 JA</option>
+              <option value="zh">🇨🇳 ZH</option>
             </select>
 
             {/* AI Image Model Selector */}
@@ -190,16 +190,16 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               value={aiImageModel}
               onChange={handleAiImageModelChange}
               disabled={!project || loading}
-              className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="AI Model for Scene Backgrounds"
             >
-              <option value="flux-pro-1.1">🎨 Flux Pro 1.1 - $0.04/img (Best Quality)</option>
-              <option value="flux-pro">🎨 Flux Pro - $0.055/img (Very Good)</option>
-              <option value="flux-dev">🎨 Flux Dev - $0.025/img (Balanced)</option>
-              <option value="flux-schnell">⚡ Flux Schnell - $0.003/img (Fast)</option>
-              <option value="ideogram-v3">📝 Ideogram V3 - $0.09/img (Text in Images)</option>
-              <option value="recraft-v3">🎭 Recraft V3 - $0.04/img (Style Variety)</option>
-              <option value="sdxl">💰 SDXL - $0.003/img (Cheap)</option>
+              <option value="flux-pro-1.1">🎨 Pro 1.1</option>
+              <option value="flux-pro">🎨 Pro</option>
+              <option value="flux-dev">🎨 Dev</option>
+              <option value="flux-schnell">⚡ Fast</option>
+              <option value="ideogram-v3">📝 Ideogram</option>
+              <option value="recraft-v3">🎭 Recraft</option>
+              <option value="sdxl">💰 SDXL</option>
             </select>
 
             {/* Background Music Manager */}
@@ -210,24 +210,24 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               />
             )}
 
-            {/* Font Size Slider - Compact Inline Control */}
-            <div className="flex items-center gap-2 px-3 py-1 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size for Reels">
-              <span className="text-xs text-gray-400">📝</span>
+            {/* Font Size Slider - Ultra Compact */}
+            <div className="flex items-center gap-1 px-2 py-1 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size">
+              <span className="text-xs">📝</span>
               <input
                 type="range"
                 min="50"
                 max="120"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className="w-14 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                 disabled={!project || loading}
               />
-              <span className="text-xs font-mono text-gray-300 w-10">{fontSize}px</span>
+              <span className="text-xs font-mono text-gray-300 w-8">{fontSize}</span>
             </div>
           </div>
 
           {/* Right side: Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={handleGeneratePreview}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
