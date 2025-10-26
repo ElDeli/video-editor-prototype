@@ -160,11 +160,12 @@ export default function MusicManager({ project, onUpdate }) {
             <div className="flex items-center gap-2">
                 <button
                     onClick={() => setShowModal(true)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded text-sm ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded text-sm mt-[14px] ${
                         currentMusic
                             ? 'bg-primary text-white'
                             : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
+                    title={currentMusic ? 'Change Background Music' : 'Add Background Music'}
                 >
                     <Music className="w-4 h-4" />
                     {currentMusic ? 'Change Music' : 'Add Music'}
@@ -177,41 +178,47 @@ export default function MusicManager({ project, onUpdate }) {
                 )}
 
                 {/* Volume Control - Always visible but disabled if no music */}
-                <div className={`flex items-center gap-2 px-3 py-2 rounded ${currentMusic ? 'bg-gray-700' : 'bg-gray-800 opacity-50'}`}>
-                    <Volume2 className="w-4 h-4 text-gray-300" />
-                    <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={musicVolume}
-                        onChange={handleMusicVolumeChange}
-                        disabled={!currentMusic}
-                        className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed"
-                        style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${musicVolume}%, #4b5563 ${musicVolume}%, #4b5563 100%)`
-                        }}
-                        title={currentMusic ? `Music Volume: ${musicVolume}%` : 'Add music to adjust volume'}
-                    />
-                    <span className="text-gray-300 text-xs w-8">{musicVolume}%</span>
+                <div className="flex flex-col gap-0.5">
+                    <label className="text-[10px] text-gray-400 px-1">Volume</label>
+                    <div className={`flex items-center gap-2 px-3 py-2 border border-gray-600 rounded-lg ${currentMusic ? 'bg-dark' : 'bg-dark opacity-50'}`}>
+                        <Volume2 className="w-4 h-4 text-gray-300" />
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={musicVolume}
+                            onChange={handleMusicVolumeChange}
+                            disabled={!currentMusic}
+                            className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed"
+                            style={{
+                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${musicVolume}%, #4b5563 ${musicVolume}%, #4b5563 100%)`
+                            }}
+                            title={currentMusic ? `Music Volume: ${musicVolume}%` : 'Add music to adjust volume'}
+                        />
+                        <span className="text-gray-300 text-xs w-8">{musicVolume}%</span>
+                    </div>
                 </div>
 
                 {/* Video Speed Control - Always visible */}
-                <div className="flex items-center gap-2 bg-gray-700 px-3 py-2 rounded">
-                    <Gauge className="w-4 h-4 text-gray-300" />
-                    <input
-                        type="range"
-                        min="0.5"
-                        max="2.0"
-                        step="0.05"
-                        value={videoSpeed}
-                        onChange={handleVideoSpeedChange}
-                        className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                        style={{
-                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${((videoSpeed - 0.5) / 1.5) * 100}%, #4b5563 ${((videoSpeed - 0.5) / 1.5) * 100}%, #4b5563 100%)`
-                        }}
-                        title={`Video Speed: ${videoSpeed}x`}
-                    />
-                    <span className="text-gray-300 text-xs w-12">{videoSpeed.toFixed(2)}x</span>
+                <div className="flex flex-col gap-0.5">
+                    <label className="text-[10px] text-gray-400 px-1">Speed</label>
+                    <div className="flex items-center gap-2 bg-dark border border-gray-600 px-3 py-2 rounded-lg">
+                        <Gauge className="w-4 h-4 text-gray-300" />
+                        <input
+                            type="range"
+                            min="0.5"
+                            max="2.0"
+                            step="0.05"
+                            value={videoSpeed}
+                            onChange={handleVideoSpeedChange}
+                            className="w-24 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                                background: `linear-gradient(to right, #10b981 0%, #10b981 ${((videoSpeed - 0.5) / 1.5) * 100}%, #4b5563 ${((videoSpeed - 0.5) / 1.5) * 100}%, #4b5563 100%)`
+                            }}
+                            title={`Video Speed: ${videoSpeed}x`}
+                        />
+                        <span className="text-gray-300 text-xs w-12">{videoSpeed.toFixed(2)}x</span>
+                    </div>
                 </div>
 
                 {currentMusic && (
