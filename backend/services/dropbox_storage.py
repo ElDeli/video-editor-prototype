@@ -104,13 +104,19 @@ class DropboxStorage:
 
             # ALSO upload to Dropbox (for permanent storage)
             if self.dbx:
+                print(f"📤 Attempting Dropbox upload: {dropbox_path}")
                 try:
                     with open(local_cache_path, 'rb') as f:
                         self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
                     print(f"☁️ Uploaded to Dropbox: {dropbox_path}")
                 except Exception as e:
-                    print(f"⚠️ Dropbox upload failed (continuing with local cache): {e}")
+                    print(f"❌ ERROR: Dropbox upload FAILED for {dropbox_path}")
+                    print(f"❌ Error details: {type(e).__name__}: {str(e)}")
+                    print(f"⚠️ File saved to local cache only - NOT synced to Dropbox!")
                     # Don't raise - we have local cache, that's enough
+            else:
+                print(f"⚠️ WARNING: Dropbox client not initialized - file NOT uploaded to Dropbox!")
+                print(f"⚠️ File saved to local cache only: {local_cache_path}")
 
             # Return LOCAL path so video generation can access it
             return str(local_cache_path)
