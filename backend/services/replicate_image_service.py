@@ -8,6 +8,7 @@ import requests
 from pathlib import Path
 from typing import Optional
 import hashlib
+from services.dropbox_storage import storage
 
 class ReplicateImageService:
     def __init__(self):
@@ -18,10 +19,11 @@ class ReplicateImageService:
         # Set API token for replicate
         os.environ['REPLICATE_API_TOKEN'] = self.api_token
 
-        # Cache directory for generated images (centralized in Dropbox)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/image_cache")
-        self.cache_dir = Path(dropbox_path)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Use DropboxStorage for hybrid Mac/Railway support
+        # This automatically handles:
+        # - Mac: ~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/image_cache
+        # - Railway: /tmp/video_editor_cache/image_cache + Dropbox API upload
+        print("📁 Image cache using DropboxStorage hybrid system")
 
         # Available AI Models - Map from friendly names to Replicate model IDs
         self.models = {
@@ -153,11 +155,15 @@ class ReplicateImageService:
 
             # Check cache first (include model in cache key)
             cache_key = self._get_cache_key(keyword, width, height, model)
-            cached_path = self.cache_dir / f"{cache_key}.jpg"
+            filename = f"{cache_key}.jpg"
+            rel_path = f'image_cache/{filename}'
 
-            if cached_path.exists():
+            # Check if image exists in cache via DropboxStorage
+            if storage.file_exists(rel_path):
+                # Get full path for returning
+                cached_full_path = self._get_cache_full_path(filename)
                 print(f"✓ Using cached image for '{keyword}' (model: {model})")
-                return str(cached_path)
+                return str(cached_full_path)
 
             # Translate keyword to English for better results
             prompt = self._create_prompt(keyword)
@@ -216,12 +222,11 @@ class ReplicateImageService:
                 image_url = output[0] if isinstance(output, list) else output
                 image_data = requests.get(image_url).content
 
-                # Save to cache
-                with open(cached_path, 'wb') as f:
-                    f.write(image_data)
+                # Save to cache via DropboxStorage (handles Mac/Railway automatically)
+                saved_path = storage.save_file(rel_path, image_data)
 
-                print(f"✓ Image generated and cached: {cached_path}")
-                return str(cached_path)
+                print(f"✓ Image generated and cached: {saved_path}")
+                return saved_path
             else:
                 print(f"✗ No image generated for '{keyword}'")
                 return None
@@ -281,6 +286,19 @@ class ReplicateImageService:
             model = self.default_model
         key_string = f"{keyword}_{width}_{height}_{model}"
         return hashlib.md5(key_string.encode()).hexdigest()
+
+    def _get_cache_full_path(self, filename: str) -> Path:
+        """
+        Get full path to cached image file
+        Handles both Mac (local Dropbox) and Railway (/tmp cache) environments
+        """
+        rel_path = f'image_cache/{filename}'
+        if storage.use_local:
+            # Mac: Use local Dropbox folder
+            return storage.local_dropbox_path / rel_path
+        else:
+            # Railway: Use local /tmp cache
+            return Path('/tmp/video_editor_cache') / rel_path
 
     def get_thumbnail(self, keyword: str) -> Optional[str]:
         """
