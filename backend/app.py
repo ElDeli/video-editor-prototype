@@ -8,6 +8,7 @@ from pathlib import Path
 load_dotenv()
 
 from database.db_manager import DatabaseManager
+from services.dropbox_storage import storage
 from api.projects import projects_bp
 from api.scenes import scenes_bp
 from api.scripts import scripts_bp
@@ -53,8 +54,15 @@ def health_check():
 
 @app.route('/api/previews/<filename>', methods=['GET'])
 def serve_preview(filename):
-    """Serve generated preview videos from centralized Dropbox location"""
-    previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews'))
+    """Serve generated preview videos using hybrid storage (Mac/Railway)"""
+    # Use DropboxStorage to get the correct preview directory
+    # Mac: ~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews
+    # Railway: /tmp/video_editor_cache/previews
+    if storage.use_local:
+        previews_dir = storage.local_dropbox_path / 'previews'
+    else:
+        previews_dir = Path('/tmp/video_editor_cache/previews')
+
     return send_from_directory(previews_dir, filename)
 
 @app.errorhandler(404)
