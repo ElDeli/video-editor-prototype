@@ -12,7 +12,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
   const [aiImageModel, setAiImageModel] = useState('flux-dev')  // Changed from flux-schnell for better quality
-  const [fontSize, setFontSize] = useState(50)  // Default font size for Reels (0-100px range)
+  const [fontSize, setFontSize] = useState(80)  // Default font size for Reels (0-100px range)
   const [showSettings, setShowSettings] = useState(false)
 
   // Update selected voice, language, and AI model when project changes
