@@ -5,7 +5,9 @@ from datetime import datetime
 class DatabaseManager:
     def __init__(self, db_path=None):
         if db_path is None:
-            db_path = os.getenv('DATABASE_PATH', './database/editor_projects.db')
+            # Use absolute path relative to THIS file's location
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.getenv('DATABASE_PATH', os.path.join(base_dir, 'editor_projects.db'))
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
