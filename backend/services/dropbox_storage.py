@@ -16,7 +16,7 @@ except ImportError:
 class DropboxStorage:
     def __init__(self):
         # Dropbox base paths
-        self.dropbox_base = '~/Dropbox/Apps/output Horoskop/output/video_editor_prototype'
+        self.dropbox_base = '~/Library/CloudStorage/Dropbox/Apps/output Horoskop/output/video_editor_prototype'
         self.local_dropbox_path = Path(os.path.expanduser(self.dropbox_base))
 
         # Check if local Dropbox folder exists (Mac environment)
