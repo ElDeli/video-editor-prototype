@@ -12,7 +12,8 @@ from pathlib import Path
 from datetime import datetime
 
 # Add backend to path
-sys.path.insert(0, str(Path(__file__).parent))
+backend_path = Path(__file__).parent / 'backend'
+sys.path.insert(0, str(backend_path))
 
 try:
     import dropbox

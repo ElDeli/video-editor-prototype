@@ -45,8 +45,8 @@ sleep 3
 
 # Start Mac Sync Poller (Dropbox automatic sync)
 echo "🔄 Starting Mac Sync Poller..."
-cd "$SCRIPT_DIR/backend" || exit 1
-nohup ./venv/bin/python mac_sync_poller.py > ../logs/mac_sync.log 2>&1 &
+cd "$SCRIPT_DIR" || exit 1
+nohup ./backend/venv/bin/python mac_sync_poller.py > logs/mac_sync.log 2>&1 &
 SYNC_PID=$!
 echo "✅ Mac Sync Poller started (PID: $SYNC_PID)"
 sleep 1
