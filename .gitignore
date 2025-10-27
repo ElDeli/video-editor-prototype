@@ -39,3 +39,4 @@ uploads/
 # Claude documentation files (may contain secrets)
 claude_chat_notes_*.md
 COMPLETE_SYSTEM_TEST_REPORT.md
+.env.local
