@@ -153,64 +153,54 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
     <header className={`bg-dark border-b border-gray-700 ${isEmbedded ? 'px-3 py-2' : 'px-4 py-2'}`}>
       {/* Compact single-row layout for embedded mode */}
       {isEmbedded ? (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2">
           {/* Left side: Settings */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Voice Selector */}
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] text-gray-400 px-1">Voice</label>
-              <VoiceSelector
-                selectedVoice={selectedVoice}
-                onVoiceChange={handleVoiceChange}
-                disabled={!project || loading}
-              />
-            </div>
+            <VoiceSelector
+              selectedVoice={selectedVoice}
+              onVoiceChange={handleVoiceChange}
+              disabled={!project || loading}
+            />
 
             {/* Target Language Selector */}
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] text-gray-400 px-1">Language</label>
-              <select
-                value={targetLanguage}
-                onChange={handleLanguageChange}
-                disabled={!project || loading}
-                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[85px]"
-                title="Target Language for Voice Generation"
-              >
-                <option value="auto">🌐 Auto</option>
-                <option value="de">🇩🇪 DE</option>
-                <option value="en">🇬🇧 EN</option>
-                <option value="es">🇪🇸 ES</option>
-                <option value="fr">🇫🇷 FR</option>
-                <option value="it">🇮🇹 IT</option>
-                <option value="pt">🇵🇹 PT</option>
-                <option value="pl">🇵🇱 PL</option>
-                <option value="nl">🇳🇱 NL</option>
-                <option value="tr">🇹🇷 TR</option>
-                <option value="ru">🇷🇺 RU</option>
-                <option value="ja">🇯🇵 JA</option>
-                <option value="zh">🇨🇳 ZH</option>
-              </select>
-            </div>
+            <select
+              value={targetLanguage}
+              onChange={handleLanguageChange}
+              disabled={!project || loading}
+              className="px-2 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="auto">🌐 Auto</option>
+              <option value="de">🇩🇪 DE</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="es">🇪🇸 ES</option>
+              <option value="fr">🇫🇷 FR</option>
+              <option value="it">🇮🇹 IT</option>
+              <option value="pt">🇵🇹 PT</option>
+              <option value="pl">🇵🇱 PL</option>
+              <option value="nl">🇳🇱 NL</option>
+              <option value="tr">🇹🇷 TR</option>
+              <option value="ru">🇷🇺 RU</option>
+              <option value="ja">🇯🇵 JA</option>
+              <option value="zh">🇨🇳 ZH</option>
+            </select>
 
             {/* AI Image Model Selector */}
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] text-gray-400 px-1">AI Model</label>
-              <select
-                value={aiImageModel}
-                onChange={handleAiImageModelChange}
-                disabled={!project || loading}
-                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[145px]"
-                title="AI Model for Scene Backgrounds"
-              >
-                <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
-                <option value="flux-pro">🎨 Pro - $0.055</option>
-                <option value="flux-dev">🎨 Dev - $0.025</option>
-                <option value="flux-schnell">⚡ Fast - $0.003</option>
-                <option value="ideogram-v3">📝 Ideogram - $0.09</option>
-                <option value="recraft-v3">🎭 Recraft - $0.04</option>
-                <option value="sdxl">💰 SDXL - $0.003</option>
-              </select>
-            </div>
+            <select
+              value={aiImageModel}
+              onChange={handleAiImageModelChange}
+              disabled={!project || loading}
+              className="px-2 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="AI Model for Scene Backgrounds"
+            >
+              <option value="flux-pro-1.1">🎨 Pro 1.1</option>
+              <option value="flux-pro">🎨 Pro</option>
+              <option value="flux-dev">🎨 Dev</option>
+              <option value="flux-schnell">⚡ Fast</option>
+              <option value="ideogram-v3">📝 Ideogram</option>
+              <option value="recraft-v3">🎭 Recraft</option>
+              <option value="sdxl">💰 SDXL</option>
+            </select>
 
             {/* Background Music Manager */}
             {project && (
@@ -220,23 +210,19 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               />
             )}
 
-            {/* Font Size Slider - Unified Style */}
-            <div className="flex flex-col gap-0.5">
-              <label className="text-[10px] text-gray-400 px-1">Text Size</label>
-              <div className="flex items-center gap-1.5 px-3 py-2 bg-dark border border-gray-600 rounded-lg">
-                <span className="text-xs">📝</span>
-                <input
-                  type="range"
-                  min="50"
-                  max="120"
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  disabled={!project || loading}
-                  title={`Text Size: ${fontSize}px`}
-                />
-                <span className="text-xs font-mono text-gray-300 w-8">{fontSize}</span>
-              </div>
+            {/* Font Size Slider - Ultra Compact */}
+            <div className="flex items-center gap-1 px-2 py-1 bg-gray-800 border border-gray-600 rounded-lg" title="Text Size">
+              <span className="text-xs">📝</span>
+              <input
+                type="range"
+                min="50"
+                max="120"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-14 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                disabled={!project || loading}
+              />
+              <span className="text-xs font-mono text-gray-300 w-8">{fontSize}</span>
             </div>
           </div>
 
@@ -246,7 +232,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleGeneratePreview}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Generate video preview"
             >
               <Play className="w-4 h-4" />
               {generating ? 'Generating...' : 'Preview'}
@@ -256,7 +241,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleExport}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Export final video"
             >
               <Download className="w-4 h-4" />
               {generating ? 'Exporting...' : 'Export'}
@@ -266,7 +250,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleUploadToQueue}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Upload video to automation queue"
             >
               <Upload className="w-4 h-4" />
               Upload to Queue
@@ -295,60 +278,50 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
 
             <div className="flex items-center gap-4">
               {/* Voice Selector */}
-              <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-gray-400 px-1">Voice</label>
-                <VoiceSelector
-                  selectedVoice={selectedVoice}
-                  onVoiceChange={handleVoiceChange}
-                  disabled={!project || loading}
-                />
-              </div>
+              <VoiceSelector
+                selectedVoice={selectedVoice}
+                onVoiceChange={handleVoiceChange}
+                disabled={!project || loading}
+              />
 
               {/* Target Language Selector */}
-              <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-gray-400 px-1">Language</label>
-                <select
-                  value={targetLanguage}
-                  onChange={handleLanguageChange}
-                  disabled={!project || loading}
-                  className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
-                  title="Target Language for Voice Generation"
-                >
-                  <option value="auto">🌐 Auto</option>
-                  <option value="de">🇩🇪 Deutsch</option>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="es">🇪🇸 Español</option>
-                  <option value="fr">🇫🇷 Français</option>
-                  <option value="it">🇮🇹 Italiano</option>
-                  <option value="pt">🇵🇹 Português</option>
-                  <option value="pl">🇵🇱 Polski</option>
-                  <option value="nl">🇳🇱 Nederlands</option>
-                  <option value="tr">🇹🇷 Türkçe</option>
-                  <option value="ru">🇷🇺 Русский</option>
-                  <option value="ja">🇯🇵 日本語</option>
-                  <option value="zh">🇨🇳 中文</option>
-                </select>
-              </div>
+              <select
+                value={targetLanguage}
+                onChange={handleLanguageChange}
+                disabled={!project || loading}
+                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
+              >
+                <option value="auto">🌐 Auto</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="it">🇮🇹 Italiano</option>
+                <option value="pt">🇵🇹 Português</option>
+                <option value="pl">🇵🇱 Polski</option>
+                <option value="nl">🇳🇱 Nederlands</option>
+                <option value="tr">🇹🇷 Türkçe</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="zh">🇨🇳 中文</option>
+              </select>
 
               {/* AI Image Model Selector - WIDER for price visibility */}
-              <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-gray-400 px-1">AI Model</label>
-                <select
-                  value={aiImageModel}
-                  onChange={handleAiImageModelChange}
-                  disabled={!project || loading}
-                  className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px]"
-                  title="AI Model for Scene Backgrounds"
-                >
-                  <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
-                  <option value="flux-pro">🎨 Pro - $0.055</option>
-                  <option value="flux-dev">🎨 Dev - $0.025</option>
-                  <option value="flux-schnell">⚡ Fast - $0.003</option>
-                  <option value="ideogram-v3">📝 Ideogram - $0.09</option>
-                  <option value="recraft-v3">🎭 Recraft - $0.04</option>
-                  <option value="sdxl">💰 SDXL - $0.003</option>
-                </select>
-              </div>
+              <select
+                value={aiImageModel}
+                onChange={handleAiImageModelChange}
+                disabled={!project || loading}
+                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-sm hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px]"
+                title="AI Model for Scene Backgrounds"
+              >
+                <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
+                <option value="flux-pro">🎨 Pro - $0.055</option>
+                <option value="flux-dev">🎨 Dev - $0.025</option>
+                <option value="flux-schnell">⚡ Fast - $0.003</option>
+                <option value="ideogram-v3">📝 Ideogram - $0.09</option>
+                <option value="recraft-v3">🎭 Recraft - $0.04</option>
+                <option value="sdxl">💰 SDXL - $0.003</option>
+              </select>
 
               {/* Divider */}
               <div className="h-8 w-px bg-gray-600"></div>
@@ -362,22 +335,18 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               )}
 
               {/* Font Size Slider - Unified Style */}
-              <div className="flex flex-col gap-0.5">
-                <label className="text-[10px] text-gray-400 px-1">Text Size</label>
-                <div className="flex items-center gap-2 px-3 py-2 bg-dark border border-gray-600 rounded-lg">
-                  <span className="text-sm text-gray-400">📝</span>
-                  <input
-                    type="range"
-                    min="50"
-                    max="120"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(Number(e.target.value))}
-                    className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                    disabled={!project || loading}
-                    title={`Text Size: ${fontSize}px`}
-                  />
-                  <span className="text-sm font-mono text-gray-300 w-12">{fontSize}px</span>
-                </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-dark border border-gray-600 rounded-lg" title="Text Size for Reels">
+                <span className="text-sm text-gray-400">📝</span>
+                <input
+                  type="range"
+                  min="50"
+                  max="120"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                  className="w-20 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  disabled={!project || loading}
+                />
+                <span className="text-sm font-mono text-gray-300 w-12">{fontSize}px</span>
               </div>
             </div>
           </div>
@@ -388,7 +357,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleGeneratePreview}
               className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Generate video preview"
             >
               <Play className="w-4 h-4" />
               {generating ? 'Generating...' : 'Preview'}
@@ -398,7 +366,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleExport}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Export final video"
             >
               <Download className="w-4 h-4" />
               {generating ? 'Exporting...' : 'Export'}
@@ -408,7 +375,6 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
               onClick={handleUploadToQueue}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!project || loading || scenes.length === 0 || generating}
-              title="Upload video to automation queue"
             >
               <Upload className="w-4 h-4" />
               Upload to Queue
