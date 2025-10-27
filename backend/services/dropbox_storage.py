@@ -109,6 +109,10 @@ class DropboxStorage:
                     with open(local_cache_path, 'rb') as f:
                         self.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
                     print(f"☁️ Uploaded to Dropbox: {dropbox_path}")
+
+                    # Notify Mac to download this file (for automatic sync)
+                    self._notify_mac_sync(rel_path)
+
                 except Exception as e:
                     print(f"❌ ERROR: Dropbox upload FAILED for {dropbox_path}")
                     print(f"❌ Error details: {type(e).__name__}: {str(e)}")
@@ -169,6 +173,46 @@ class DropboxStorage:
                 _, response = self.dbx.files_download(dropbox_path)
                 return response.content
             raise Exception("File not accessible")
+
+    def _notify_mac_sync(self, rel_path):
+        """
+        Notify Mac to download file from Dropbox
+        Writes to sync queue that Mac will poll
+        """
+        if not self.dbx:
+            return
+
+        try:
+            import json
+            from datetime import datetime
+
+            # Read current sync queue
+            sync_queue_path = '/Apps/output Horoskop/output/video_editor_prototype/.sync_queue.json'
+            try:
+                _, response = self.dbx.files_download(sync_queue_path)
+                queue = json.loads(response.content)
+            except:
+                queue = {'pending': []}
+
+            # Add new file to queue
+            queue['pending'].append({
+                'path': rel_path,
+                'timestamp': datetime.utcnow().isoformat(),
+                'source': 'railway'
+            })
+
+            # Write updated queue back to Dropbox
+            queue_json = json.dumps(queue, indent=2).encode('utf-8')
+            self.dbx.files_upload(
+                queue_json,
+                sync_queue_path,
+                mode=dropbox.files.WriteMode.overwrite
+            )
+            print(f"📬 Notified Mac to sync: {rel_path}")
+
+        except Exception as e:
+            print(f"⚠️ Failed to notify Mac sync: {e}")
+            # Don't raise - notification is optional
 
 # Global instance
 storage = DropboxStorage()
