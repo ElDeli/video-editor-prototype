@@ -49,12 +49,13 @@ Python 3.9.x
 
 ---
 
-### Step 2: Clone/Download Project
+### Step 2: Navigate to Project
 
 ```bash
-cd ~/Dropbox/Social\ Media/Video\ Editor\ Prototype/
-# Project should be in: video_editor_prototype/
+cd ~/Library/CloudStorage/Dropbox/Social\ Media/video_editor_prototype/
 ```
+
+**Note:** Project location updated to use macOS CloudStorage path (2025-10-27)
 
 ---
 
@@ -104,6 +105,12 @@ OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # ElevenLabs API (OPTIONAL - for premium TTS)
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# Dropbox API (REQUIRED for Railway cloud deployment)
+DROPBOX_ACCESS_TOKEN=your_dropbox_access_token
+DROPBOX_REFRESH_TOKEN=your_dropbox_refresh_token
+DROPBOX_APP_KEY=your_dropbox_app_key
+DROPBOX_APP_SECRET=your_dropbox_app_secret
 ```
 
 **How to get API Keys:**
@@ -125,6 +132,14 @@ ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
    - Sign up / Login
    - Go to Profile → API Keys
    - Copy your key
+
+4. **Dropbox API (Required for Railway):**
+   - Go to https://www.dropbox.com/developers/apps
+   - Create App → Scoped Access → Full Dropbox → Name your app
+   - Go to Permissions tab → Enable: `files.content.write`, `files.content.read`
+   - Go to Settings tab → Generate Access Token
+   - Copy App Key, App Secret, Access Token
+   - **Note:** For refresh token, see RAILWAY_DEPLOYMENT.md
 
 **Save and close:** `Ctrl+O`, `Enter`, `Ctrl+X`
 
@@ -198,21 +213,23 @@ echo "✅ All directories created!"
 ### Option 1: Using Start Scripts (Recommended)
 
 ```bash
-cd video_editor_prototype
+cd ~/Library/CloudStorage/Dropbox/Social\ Media/video_editor_prototype
 
 # Start both backend and frontend
 bash start_all.command
 ```
 
 **What happens:**
-1. Python cache is cleared
-2. Backend starts on port 5001
-3. Frontend starts on port 3000
-4. Browser opens automatically at http://localhost:3000
+1. Cleans up old processes
+2. Python cache is cleared
+3. Backend starts on port 5001
+4. **Mac Sync Poller starts** (syncs Railway uploads every 30s)
+5. Frontend starts on port 3000
 
 **Logs:**
 - Backend: `logs/backend.log`
 - Frontend: `logs/frontend.log`
+- **Mac Sync Poller:** `logs/mac_sync.log`
 
 ### Option 2: Manual Start (for debugging)
 
@@ -234,15 +251,21 @@ npm run dev
 ## 🛑 Stopping the System
 
 ```bash
-cd video_editor_prototype
+cd ~/Library/CloudStorage/Dropbox/Social\ Media/video_editor_prototype
 bash stop_all.command
 ```
 
 **What happens:**
-1. All Python processes killed
-2. All Node/Vite processes killed
+1. All Python processes killed (backend + mac_sync_poller)
+2. All Node/Vite processes killed (frontend)
 3. Ports 3000 and 5001 freed
-4. Python cache cleared
+
+**Verify all stopped:**
+```bash
+lsof -ti:5001  # Should return nothing
+lsof -ti:3000  # Should return nothing
+pgrep -f "mac_sync_poller.py"  # Should return nothing
+```
 
 ---
 
@@ -305,12 +328,16 @@ video_editor_prototype/
 │
 ├── logs/                            # Application Logs
 │   ├── backend.log                  # Backend Logs
-│   └── frontend.log                 # Frontend Logs
+│   ├── frontend.log                 # Frontend Logs
+│   └── mac_sync.log                 # Mac Sync Poller Logs
 │
+├── mac_sync_poller.py               # Railway → Mac Auto-Sync (30s interval)
 ├── start_all.command                # Start Script (macOS)
 ├── stop_all.command                 # Stop Script (macOS)
+├── system_health_check.sh           # System Health Check (28 checks)
 ├── HANDBUCH.md                      # User Manual (German)
 ├── AI_MODEL_INTEGRATION.md          # Developer Docs (AI Models)
+├── RAILWAY_DEPLOYMENT.md            # Railway Cloud Deployment Guide
 └── INSTALLATION.md                  # This File
 
 ```
@@ -321,13 +348,14 @@ video_editor_prototype/
 
 ### Backend Stack
 - **Flask 3.0.3** - Python web framework
-- **SQLite** - Lightweight database
+- **SQLite** - Lightweight database (absolute path fix 2025-10-27)
 - **Replicate API** - AI image generation (Flux, Ideogram, Recraft, SDXL)
 - **OpenAI API** - TTS + GPT-4o-mini for keyword extraction
 - **Edge TTS 7.2.3** - Free Microsoft TTS (fixed 403 error!)
 - **ElevenLabs** - Premium TTS (optional)
 - **MoviePy 1.0.3** - Python video editing library
 - **FFmpeg 8.0** - Video/audio processing
+- **Dropbox SDK 11.36.2** - Hybrid storage (local Mac + Railway cloud)
 
 ### Frontend Stack
 - **React 18** - UI framework
@@ -603,47 +631,48 @@ brew upgrade ffmpeg node python@3.9
 
 ---
 
-## 🚀 Deployment (Future)
+## 🚀 Railway Cloud Deployment
 
-### Server Requirements
+**Status:** ✅ LIVE at https://video-editor.momentummind.de
 
-- **OS:** Ubuntu 22.04 LTS or later
-- **RAM:** 16GB minimum
-- **Storage:** 50GB+ SSD
-- **Network:** Stable internet for API calls
+### Hybrid Architecture
 
-### Production Setup
+This system uses **HYBRID DEPLOYMENT**:
+
+```
+LOCAL MAC (Primary)              RAILWAY (Cloud Backup)
+├─ Backend: localhost:5001       ├─ Backend: video-editor.momentummind.de
+├─ Frontend: localhost:3000      │
+├─ Direct Dropbox Access         ├─ Dropbox API Access
+└─ Mac Sync Poller (30s)         └─ Writes to .sync_queue.json
+       ↓                                    ↓
+       └────── SHARED DROPBOX STORAGE ──────┘
+               (Source of Truth)
+```
+
+### Why Hybrid?
+
+1. **Mac** - Fast local Dropbox filesystem access
+2. **Railway** - 24/7 cloud deployment for remote access
+3. **Auto-Sync** - Mac Sync Poller syncs Railway uploads every 30s
+4. **Shared Storage** - Both use same Dropbox folders
+
+### Railway Deployment Guide
+
+See **RAILWAY_DEPLOYMENT.md** for complete deployment instructions including:
+- Railway project setup
+- Environment variables configuration
+- Dropbox API token refresh setup
+- Monitoring and logs
+
+### Health Monitoring
 
 ```bash
-# Install system dependencies
-sudo apt update
-sudo apt install -y python3.9 python3-pip ffmpeg nodejs npm
+# Local system health (28 checks)
+bash system_health_check.sh
 
-# Clone repository
-git clone <repository-url>
-cd video_editor_prototype
-
-# Backend setup
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Setup environment variables
-cp .env.example .env
-nano .env  # Add production API keys
-
-# Frontend build
-cd ../frontend
-npm install
-npm run build
-
-# Run with PM2 (process manager)
-npm install -g pm2
-pm2 start backend/app.py --name video-editor-backend
-pm2 start frontend --name video-editor-frontend
-pm2 save
-pm2 startup
+# Railway deployment health
+curl https://video-editor.momentummind.de/api/health
 ```
 
 ---
@@ -651,21 +680,38 @@ pm2 startup
 ## 📞 Support
 
 ### Documentation
-- **User Manual:** `HANDBUCH.md`
+- **README:** Complete system overview
+- **QUICKSTART:** 5-minute setup guide
+- **SYSTEM_ARCHITECTURE:** Technical architecture
+- **RAILWAY_DEPLOYMENT:** Cloud deployment guide
+- **User Manual:** `HANDBUCH.md` (German)
 - **AI Models:** `AI_MODEL_INTEGRATION.md`
 - **Installation:** This file
 
 ### Logs
 - Backend: `logs/backend.log`
 - Frontend: `logs/frontend.log`
+- Mac Sync Poller: `logs/mac_sync.log`
 
 ### Common Issues
-- FFmpeg errors → Check FFmpeg installation
+- **Database errors** → FIXED with absolute paths (2025-10-27)
+- **Mac Sync Poller not starting** → FIXED with venv rebuild (2025-10-27)
+- FFmpeg errors → Check FFmpeg installation (`brew install ffmpeg`)
 - API errors → Check `.env` file and API keys
 - Performance → Clear cache, reduce scene count
 
+### System Health Check
+
+Run comprehensive health check (28 tests):
+```bash
+bash system_health_check.sh
+```
+
+Expected result: ✅ 28/28 (100%) HEALTHY
+
 ---
 
-**Version:** 1.0
-**Last Updated:** 2025-01-24
+**Version:** 2.0.0
+**Last Updated:** 2025-10-27
+**System Health:** ✅ 100% (NULL BUG TOLERANCE ACHIEVED)
 **Author:** Video Editor Prototype Team

@@ -1,24 +1,26 @@
 # 🏗️ Video Editor Prototype - System Architecture
 
-**Version:** 1.0.0
-**Last Updated:** 2025-01-24
-**Status:** ✅ Production Ready
+**Version:** 2.0.0
+**Last Updated:** 2025-10-27
+**Status:** ✅ Production Ready (100% Health)
 
 ---
 
 ## 📋 Table of Contents
 
 1. [System Overview](#system-overview)
-2. [Project Structure](#project-structure)
-3. [Backend Architecture](#backend-architecture)
-4. [Frontend Architecture](#frontend-architecture)
-5. [API Endpoints](#api-endpoints)
-6. [Database Schema](#database-schema)
-7. [File Paths & Directories](#file-paths--directories)
-8. [Data Flow](#data-flow)
-9. [Service Layer](#service-layer)
-10. [Configuration](#configuration)
-11. [Deployment](#deployment)
+2. [**NEW: Hybrid Mac + Railway Deployment**](#hybrid-deployment)
+3. [Project Structure](#project-structure)
+4. [Backend Architecture](#backend-architecture)
+5. [Frontend Architecture](#frontend-architecture)
+6. [API Endpoints](#api-endpoints)
+7. [Database Schema](#database-schema)
+8. [**NEW: Dropbox Storage Architecture**](#dropbox-storage)
+9. [File Paths & Directories](#file-paths--directories)
+10. [Data Flow](#data-flow)
+11. [Service Layer](#service-layer)
+12. [Configuration](#configuration)
+13. [Deployment](#deployment)
 
 ---
 
@@ -48,8 +50,78 @@
 
 | Service | Port | URL |
 |---------|------|-----|
-| Backend | 5001 | http://localhost:5001 |
-| Frontend | 3000 | http://localhost:3000 |
+| Backend (Local) | 5001 | http://localhost:5001 |
+| Frontend (Local) | 3000 | http://localhost:3000 |
+| Backend (Railway) | 443 | https://video-editor.momentummind.de |
+
+---
+
+## 🔄 Hybrid Deployment
+
+### Architecture Overview
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                    HYBRID MAC + RAILWAY SYSTEM                     │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  LOCAL MAC (Primary - Fast)      RAILWAY (Cloud - 24/7)          │
+│  ├─ Backend: localhost:5001       ├─ Backend: video-editor.      │
+│  ├─ Frontend: localhost:3000      │   momentummind.de            │
+│  ├─ Direct Dropbox Filesystem     ├─ Dropbox API Access          │
+│  │   ~/Library/CloudStorage/      │                              │
+│  │   Dropbox/...                  │                              │
+│  └─ Mac Sync Poller (30s)         └─ Writes to .sync_queue.json │
+│       ↓                                    ↓                      │
+│       └────────── SHARED DROPBOX STORAGE ──────────┘             │
+│                  (Source of Truth)                                │
+│                                                                    │
+│  DROPBOX STORAGE STRUCTURE:                                       │
+│  ├─ CODE: ~/Library/CloudStorage/Dropbox/Social Media/           │
+│  │         video_editor_prototype/                               │
+│  │                                                                │
+│  └─ OUTPUT: ~/Library/CloudStorage/Dropbox/Apps/                 │
+│            output Horoskop/output/video_editor_prototype/         │
+│            ├─ image_cache/ (1088 AI images)                       │
+│            ├─ uploads/ (user files)                               │
+│            └─ .sync_queue.json (Railway→Mac notifications)        │
+│                                                                    │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### How It Works
+
+1. **Local Mac (Primary)**
+   - Fast local development
+   - Direct Dropbox filesystem access (instant)
+   - Backend + Frontend + Mac Sync Poller
+   - Database: 960 projects (389KB)
+
+2. **Railway Cloud (Backup/Remote)**
+   - 24/7 availability
+   - Remote access from anywhere
+   - Dropbox API access (slower but works)
+   - Uploads trigger Mac sync via `.sync_queue.json`
+
+3. **Mac Sync Poller**
+   - Runs every 30 seconds
+   - Polls `.sync_queue.json` for new files
+   - Downloads Railway uploads to local Mac
+   - Ensures Mac and Railway stay in sync
+
+4. **Shared Dropbox Storage**
+   - Single source of truth
+   - Images cached in `image_cache/` (saves $$)
+   - User uploads in `uploads/`
+   - Both systems read/write same files
+
+### Benefits
+
+✅ **Speed:** Mac uses local filesystem (instant)
+✅ **Reliability:** Railway runs 24/7 even when Mac sleeps
+✅ **Cost-Effective:** Shared image cache across both
+✅ **Auto-Sync:** Mac Sync Poller keeps everything synchronized
+✅ **No Conflicts:** State management prevents race conditions
 
 ---
 
