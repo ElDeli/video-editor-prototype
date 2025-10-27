@@ -22,6 +22,7 @@ class SimpleVideoGenerator:
     def __init__(self, tts_voice='de-DE-KatjaNeural'):
         # Output directory for generated videos (hybrid storage)
         self.output_dir = storage.get_save_dir('previews')
+        print(f"🎬 SimpleVideoGenerator initialized with output_dir: {self.output_dir}", file=sys.stderr, flush=True)
 
         self.temp_dir = Path(tempfile.gettempdir()) / "video_editor_simple"
         self.temp_dir.mkdir(exist_ok=True)
