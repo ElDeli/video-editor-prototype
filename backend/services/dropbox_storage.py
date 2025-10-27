@@ -133,15 +133,17 @@ class DropboxStorage:
             rel_path: Relative path from Dropbox base (e.g., 'uploads/music')
 
         Returns:
-            Path object for local filesystem, or Dropbox path string for API
+            Path object for local filesystem or Railway cache directory
         """
         if self.use_local:
             full_path = self.local_dropbox_path / rel_path
             full_path.mkdir(parents=True, exist_ok=True)
             return full_path
         else:
-            # Return logical path for API (will use save_file to upload)
-            return Path(rel_path)
+            # Railway: Return absolute path to /tmp cache directory
+            cache_path = Path('/tmp/video_editor_cache') / rel_path
+            cache_path.mkdir(parents=True, exist_ok=True)
+            return cache_path
 
     def file_exists(self, rel_path):
         """Check if file exists in storage"""
