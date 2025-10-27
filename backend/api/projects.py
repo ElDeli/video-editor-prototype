@@ -109,7 +109,8 @@ def get_scenes(project_id):
         if not project:
             return jsonify({'error': 'Project not found'}), 404
 
-        scenes = project.get('scenes', [])
+        # Get scenes from database using get_project_scenes()
+        scenes = db.get_project_scenes(project_id)
         return jsonify({'scenes': scenes})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
