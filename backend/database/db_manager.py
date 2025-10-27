@@ -234,6 +234,20 @@ class DatabaseManager:
         conn.close()
         return self.get_project(project_id)
 
+    def delete_project(self, project_id):
+        """Delete a project and all its scenes"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # Delete all scenes first (foreign key constraint)
+        cursor.execute('DELETE FROM scenes WHERE project_id = ?', (project_id,))
+
+        # Delete the project
+        cursor.execute('DELETE FROM projects WHERE id = ?', (project_id,))
+
+        conn.commit()
+        conn.close()
+
     # Scenes
     def add_scene(self, project_id, scene_data):
         conn = self.get_connection()

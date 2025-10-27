@@ -19,7 +19,7 @@ def list_projects():
     """List all projects"""
     try:
         projects = db.list_projects()
-        return jsonify(projects)
+        return jsonify({'projects': projects})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -85,6 +85,32 @@ def update_project(project_id):
 
         updated_project = db.get_project(project_id)
         return jsonify(updated_project)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@projects_bp.route('/projects/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    """Delete a project"""
+    try:
+        project = db.get_project(project_id)
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+
+        db.delete_project(project_id)
+        return jsonify({'message': 'Project deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@projects_bp.route('/projects/<int:project_id>/scenes', methods=['GET'])
+def get_scenes(project_id):
+    """Get all scenes for a project"""
+    try:
+        project = db.get_project(project_id)
+        if not project:
+            return jsonify({'error': 'Project not found'}), 404
+
+        scenes = project.get('scenes', [])
+        return jsonify({'scenes': scenes})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
