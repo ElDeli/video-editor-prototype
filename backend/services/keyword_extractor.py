@@ -432,6 +432,19 @@ Good: "zwei Menschen halten Hände über Grenze hinweg"
                         max_tokens=30
                     )
                     keyword = response.choices[0].message.content.strip()
+
+                    # FIX: Strip out "Bad:" / "Good:" example format if OpenAI returns it
+                    if "Good:" in keyword:
+                        # Extract only the "Good:" part
+                        keyword = keyword.split("Good:")[-1].strip()
+                    elif keyword.startswith("Bad:"):
+                        # If starts with Bad but no Good, try to extract after first quote
+                        print(f"   ⚠️ WARNING: OpenAI returned 'Bad:' format without 'Good:', skipping")
+                        continue
+
+                    # Remove any remaining quotes or parentheses artifacts
+                    keyword = keyword.strip('"\'()')
+
                     keywords.append(keyword)
                     print(f"   • Temp {temp}: '{keyword}'")
 
