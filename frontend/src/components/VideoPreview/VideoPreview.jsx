@@ -29,26 +29,14 @@ function VideoPreview({ previewData, seekToScene }) {
     return totalTime
   }
 
-  // Track previous selectedSceneId to only jump when it actually changes
-  const prevSelectedSceneIdRef = useRef(null)
-
   // Jump to selected scene when it changes
   useEffect(() => {
-    // Only jump if selectedSceneId ACTUALLY changed (not just re-render)
-    if (selectedSceneId === prevSelectedSceneIdRef.current) {
-      return // No change, don't seek
-    }
-
     console.log('🔄 Scene selection changed:', {
       selectedSceneId,
-      previousSceneId: prevSelectedSceneIdRef.current,
       hasPlayer: !!playerRef.current,
       hasPreview: !!previewData,
       scenesCount: scenes.length
     })
-
-    // Update the previous value
-    prevSelectedSceneIdRef.current = selectedSceneId
 
     if (selectedSceneId && playerRef.current && previewData) {
       const sceneIndex = scenes.findIndex(s => s.id === selectedSceneId)
@@ -80,9 +68,7 @@ function VideoPreview({ previewData, seekToScene }) {
         console.warn(`⚠️ Scene ${selectedSceneId} not found in scenes array`)
       }
     }
-    // ONLY depend on selectedSceneId - scenes/previewData are accessed via closure
-    // This prevents re-running on every render when scenes array reference changes
-  }, [selectedSceneId])
+  }, [selectedSceneId, scenes, previewData])
 
   return (
     <div className="h-full flex flex-col p-4">

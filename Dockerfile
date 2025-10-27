@@ -31,7 +31,7 @@ COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/dist ./backend/static/
 
 # Create necessary directories
-RUN mkdir -p /app/backend/database /app/backend/previews
+RUN mkdir -p /app/backend/database
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

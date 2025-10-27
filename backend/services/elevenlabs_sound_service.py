@@ -10,7 +10,7 @@ class ElevenLabsSoundService:
     def __init__(self):
         self.api_key = os.getenv('ELEVENLABS_API_KEY', '')
         self.base_url = 'https://api.elevenlabs.io/v1'
-        self.sound_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/uploads/sound_effects'))
+        self.sound_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/uploads/sound_effects'))
         self.sound_dir.mkdir(parents=True, exist_ok=True)
 
     def generate_sound_effect(self, text_prompt, duration_seconds=None):

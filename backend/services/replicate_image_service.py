@@ -8,7 +8,6 @@ import requests
 from pathlib import Path
 from typing import Optional
 import hashlib
-from services.dropbox_storage import storage
 
 class ReplicateImageService:
     def __init__(self):
@@ -19,8 +18,10 @@ class ReplicateImageService:
         # Set API token for replicate
         os.environ['REPLICATE_API_TOKEN'] = self.api_token
 
-        # Use hybrid storage for image cache (Dropbox on Mac, /tmp cache on Railway)
-        self.cache_dir = storage.get_save_dir('image_cache')
+        # Cache directory for generated images (centralized in Dropbox)
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/image_cache")
+        self.cache_dir = Path(dropbox_path)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Available AI Models - Map from friendly names to Replicate model IDs
         self.models = {
@@ -33,9 +34,8 @@ class ReplicateImageService:
             'sdxl': 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'  # Legacy
         }
 
-        # Default model (Flux Dev = Best balance of quality & speed at $0.025/img)
-        # Changed from flux-schnell ($0.003) for 3x better image quality
-        self.default_model = 'flux-dev'
+        # Default model (Flux Schnell = Fast & Cheap at $0.003/img)
+        self.default_model = 'flux-schnell'
 
         # German to English keyword translation for better AI results
         self.translations = {
@@ -153,32 +153,11 @@ class ReplicateImageService:
 
             # Check cache first (include model in cache key)
             cache_key = self._get_cache_key(keyword, width, height, model)
-            cache_filename = f"{cache_key}.jpg"
-            cache_rel_path = f"image_cache/{cache_filename}"
+            cached_path = self.cache_dir / f"{cache_key}.jpg"
 
-            # Check if cached image exists (works on both Mac and Railway)
-            if storage.file_exists(cache_rel_path):
-                # Get full path for local access
-                cached_path = self.cache_dir / cache_filename
-
-                # On Railway: If file exists in Dropbox but not locally, download it
-                if not cached_path.exists():
-                    print(f"📥 Downloading cached image from Dropbox: {cache_filename}")
-                    try:
-                        image_data = storage.get_file_content(cache_rel_path)
-                        cached_path.parent.mkdir(parents=True, exist_ok=True)
-                        cached_path.write_bytes(image_data)
-                        print(f"✓ Downloaded from Dropbox to local cache")
-                    except Exception as e:
-                        print(f"⚠️ Failed to download from Dropbox: {e}")
-                        # Continue to regenerate
-                        pass
-                    else:
-                        print(f"✓ Using cached image for '{keyword}' (model: {model})")
-                        return str(cached_path)
-                else:
-                    print(f"✓ Using cached image for '{keyword}' (model: {model})")
-                    return str(cached_path)
+            if cached_path.exists():
+                print(f"✓ Using cached image for '{keyword}' (model: {model})")
+                return str(cached_path)
 
             # Translate keyword to English for better results
             prompt = self._create_prompt(keyword)
@@ -226,13 +205,8 @@ class ReplicateImageService:
                     "aspect_ratio": "9:16",  # Vertical format for Instagram/TikTok
                     "output_format": "jpg",  # ⭐ JPEG for compatibility with cache system
                     "output_quality": 90,
-                    "prompt_upsampling": True,  # ⭐ AUTO-ENHANCE PROMPTS FOR BETTER QUALITY!
-                    "safety_tolerance": 2  # ⭐ Less restrictive filtering (1=strict, 6=permissive)
+                    "prompt_upsampling": True  # ⭐ AUTO-ENHANCE PROMPTS FOR BETTER QUALITY!
                 }
-
-                # Add guidance for Pro models (not supported on Schnell)
-                if model in ['flux-pro-1.1', 'flux-pro', 'flux-dev']:
-                    input_params["guidance"] = 3.5  # ⭐ Optimal prompt adherence
 
             # Generate image using Replicate
             output = replicate.run(model_id, input=input_params)
@@ -242,11 +216,12 @@ class ReplicateImageService:
                 image_url = output[0] if isinstance(output, list) else output
                 image_data = requests.get(image_url).content
 
-                # Save to cache using hybrid storage (Dropbox + local cache on Railway)
-                saved_path = storage.save_file(cache_rel_path, image_data)
+                # Save to cache
+                with open(cached_path, 'wb') as f:
+                    f.write(image_data)
 
-                print(f"✓ Image generated and cached: {saved_path}")
-                return str(saved_path)
+                print(f"✓ Image generated and cached: {cached_path}")
+                return str(cached_path)
             else:
                 print(f"✗ No image generated for '{keyword}'")
                 return None
@@ -295,9 +270,10 @@ class ReplicateImageService:
                 # Multi-word phrase: enhance with visual descriptors to make it SPECIFIC
                 base_prompt = f"realistic depiction of {base_prompt} cinematic detailed scene"
 
-        # NO style modifiers needed - Flux prompt_upsampling handles this automatically!
-        # Just return the clean prompt from GPT or translation
-        return base_prompt
+        # Add style modifiers for better quality and specificity
+        style_suffix = ", highly detailed, photorealistic, dramatic lighting, professional photography, vivid colors, 8k uhd"
+
+        return f"{base_prompt}{style_suffix}"
 
     def _get_cache_key(self, keyword: str, width: int, height: int, model: str = None) -> str:
         """Generate cache key from parameters"""

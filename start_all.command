@@ -53,7 +53,11 @@ sleep 1
 
 # Start Frontend (Vite React)
 echo "⚛️  Starting Frontend (Port 3000)..."
-cd "$SCRIPT_DIR/frontend" || exit 1
+cd "$SCRIPT_DIR/frontend" || {
+    echo "❌ Error: Cannot find frontend directory!"
+    echo "Expected: $SCRIPT_DIR/frontend"
+    exit 1
+}
 
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then

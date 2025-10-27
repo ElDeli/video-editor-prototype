@@ -149,9 +149,8 @@ def bulk_add_scenes(project_id):
             full_script = translation_service.translate(full_script, target_language)
             print("✓ Translation complete\n")
 
-        # Use keyword extractor for visual storytelling with topic context
-        topic = project.get('name', '')  # Project name provides thematic context
-        visual_scenes = keyword_extractor.extract_visual_scenes(full_script, topic=topic)
+        # Use keyword extractor for visual storytelling
+        visual_scenes = keyword_extractor.extract_visual_scenes(full_script)
 
         # Convert to database format and add
         created_scenes = []
@@ -247,10 +246,6 @@ def generate_preview(project_id):
         if not project:
             return jsonify({'error': 'Project not found'}), 404
 
-        # Get font size from request (default to 80px)
-        data = request.get_json() or {}
-        font_size = data.get('font_size', 80)
-
         # Get all scenes - ALWAYS fresh from database to ensure sound effects are included
         scenes = db.get_project_scenes(project_id)
         if not scenes:
@@ -280,10 +275,10 @@ def generate_preview(project_id):
         video_speed = project.get('video_speed', 1.0)
 
         # Get AI image model from project (default to flux-schnell - fast & cheap)
-        ai_image_model = project.get('ai_image_model', 'flux-dev')  # Changed default from flux-schnell to flux-dev
+        ai_image_model = project.get('ai_image_model', 'flux-schnell')
 
         # Generate preview
-        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model, font_size=font_size)
+        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model)
 
         # Update scene durations in database with actual timings from video generation
         if 'scene_timings' in result:
@@ -322,7 +317,6 @@ def export_video(project_id):
 
         data = request.get_json() or {}
         resolution = data.get('resolution', '1080p')
-        font_size = data.get('font_size', 80)
 
         # Get project settings
         tts_voice = project.get('tts_voice', 'de-DE-KatjaNeural')
@@ -330,7 +324,7 @@ def export_video(project_id):
         background_music_volume = project.get('background_music_volume', 7)
         target_language = project.get('target_language', 'auto')
         video_speed = project.get('video_speed', 1.0)
-        ai_image_model = project.get('ai_image_model', 'flux-dev')  # Changed default from flux-schnell to flux-dev
+        ai_image_model = project.get('ai_image_model', 'flux-schnell')
 
         # Generate export video (full resolution)
         result = preview_gen.generate_preview(
@@ -342,8 +336,7 @@ def export_video(project_id):
             target_language=target_language,
             video_speed=video_speed,
             ai_image_model=ai_image_model,
-            resolution=resolution,
-            font_size=font_size
+            resolution=resolution
         )
 
         return jsonify({
@@ -370,7 +363,7 @@ def download_video(project_id):
         resolution = request.args.get('resolution', '1080p')
 
         # Build video path (check Dropbox location first, then local)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews")
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
         video_filename = f"video_{project_id}_{resolution}.mp4"
 
         # Try Dropbox location first (unified path)
@@ -423,7 +416,7 @@ def upload_to_queue(project_id):
             return jsonify({'error': 'No output folder specified or default folder not set'}), 400
 
         # Find source video file
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews")
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews")
         video_filename = f"video_{project_id}_{resolution}.mp4"
         source_path = os.path.join(dropbox_path, video_filename)
 

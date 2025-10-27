@@ -72,7 +72,7 @@ class DatabaseManager:
 
         # Add ai_image_model column to existing projects tables (migration)
         try:
-            cursor.execute("ALTER TABLE projects ADD COLUMN ai_image_model TEXT DEFAULT 'flux-dev'")
+            cursor.execute("ALTER TABLE projects ADD COLUMN ai_image_model TEXT DEFAULT 'flux-schnell'")
             conn.commit()
         except sqlite3.OperationalError:
             # Column already exists

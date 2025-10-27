@@ -34,7 +34,7 @@ class SimpleVideoGenerator:
         self.elevenlabs_service = ElevenLabsVoiceService()
         self.openai_tts_service = OpenAITTSService()
 
-    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-dev', font_size=80):
+    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-schnell'):
         """Generate video using FFmpeg concat demuxer"""
         if not scenes:
             raise ValueError("No scenes to generate")
@@ -69,8 +69,7 @@ class SimpleVideoGenerator:
                     width,
                     height,
                     idx,
-                    ai_image_model,  # Pass AI model from generate_video()
-                    font_size  # Pass font size from generate_video()
+                    ai_image_model  # Pass AI model from generate_video()
                 )
                 scene_videos.append(scene_video)
                 scene_timings.append({
@@ -119,7 +118,7 @@ class SimpleVideoGenerator:
         # Return both path and timing information
         return str(output_path), scene_timings
 
-    def _create_scene_video(self, scene, width, height, idx, ai_image_model='flux-dev', font_size=80):
+    def _create_scene_video(self, scene, width, height, idx, ai_image_model='flux-schnell'):
         """Create single scene video with effects"""
         text = scene['script']
         bg_type = scene.get('background_type', 'solid')
@@ -163,7 +162,7 @@ class SimpleVideoGenerator:
 
         # Create image with text
         img_path = self.temp_dir / f"frame_{idx}.jpg"
-        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model, font_size)
+        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model)
 
         # Build effects filter chain
         filter_chain = VideoEffects.build_filter_chain(scene, width, height, video_duration)
@@ -183,8 +182,6 @@ class SimpleVideoGenerator:
             '-i', str(img_path),
             '-i', str(audio_path),
             '-c:v', 'libx264',
-            '-g', '30',  # Keyframe every 30 frames (1 sec) for smooth scrubbing
-            '-keyint_min', '30',  # Minimum keyframe interval
             '-t', str(video_duration),
             '-pix_fmt', 'yuv420p',
         ]
@@ -253,7 +250,7 @@ class SimpleVideoGenerator:
             print(f"🎤 Using Edge TTS voice: {voice}", file=sys.stderr, flush=True)
             asyncio.run(self._generate_edge_tts(text, output_path))
 
-    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-dev', font_size=80):
+    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-schnell'):
         """Create image with text"""
         # Always use Replicate AI image for keyword scenes
         if bg_type == 'keyword' and bg_value:
@@ -291,51 +288,32 @@ class SimpleVideoGenerator:
 
         draw = ImageDraw.Draw(img)
 
-        # OPTIMIZED FOR REELS: Larger, bolder font (controllable via slider: 50-120px)
-        # Try bold fonts with fallbacks for both Mac (local) and Linux (Railway)
-        # font_size is now passed as parameter (default: 80px)
-        font_paths = [
-            # Mac fonts
-            "/System/Library/Fonts/Arial Black.ttf",
-            "/System/Library/Fonts/Helvetica.ttc",
-            "/System/Library/Fonts/Supplemental/Impact.ttf",
-            # Linux fonts (Railway/Docker)
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-            "/usr/share/fonts/liberation/LiberationSans-Bold.ttf",
-            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-        ]
-
-        font = None
-        for font_path in font_paths:
+        # Font
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 50)
+        except:
             try:
-                font = ImageFont.truetype(font_path, font_size)
-                print(f"✓ Loaded font: {font_path}", file=sys.stderr, flush=True)
-                break
+                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", 40)
             except:
-                continue
+                font = ImageFont.load_default()
 
-        if not font:
-            print("⚠️ No system fonts found, using default (will be small!)", file=sys.stderr, flush=True)
-            font = ImageFont.load_default()
+        # Word wrap
+        wrapped_text = self._wrap_text(text, width - 100, font, draw)
 
-        # Word wrap with more padding for mobile screens
-        wrapped_text = self._wrap_text(text, width - 120, font, draw)
-
-        # Position text in UPPER 40% (Reels best practice - avoid bottom UI overlap)
+        # Center text
         bbox = draw.multiline_textbbox((0, 0), wrapped_text, font=font, align='center')
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         x = (width - text_width) // 2
-        y = int(height * 0.35) - (text_height // 2)  # Upper 35% instead of center
+        y = (height - text_height) // 2
 
-        # THICK shadow for better contrast (6px offset for readability)
-        shadow_offset = 6
-        for adj_x in range(-shadow_offset, shadow_offset + 1, 2):
-            for adj_y in range(-shadow_offset, shadow_offset + 1, 2):
+        # Draw outline
+        for adj_x in [-2, 0, 2]:
+            for adj_y in [-2, 0, 2]:
                 if adj_x != 0 or adj_y != 0:
                     draw.multiline_text((x + adj_x, y + adj_y), wrapped_text, font=font, fill=(0, 0, 0), align='center')
 
-        # Draw main text (white for maximum contrast)
+        # Draw text
         draw.multiline_text((x, y), wrapped_text, font=font, fill=(255, 255, 255), align='center')
 
         img.save(output_path, 'JPEG', quality=90)
