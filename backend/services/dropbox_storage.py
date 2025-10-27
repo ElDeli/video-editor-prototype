@@ -87,7 +87,7 @@ class DropboxStorage:
             return str(full_path)
         else:
             # DROPBOX API (Railway) + Local Cache
-            dropbox_path = f'/Apps/output Horoskop/output/video_editor_prototype/{rel_path}'
+            dropbox_path = f'/output/video_editor_prototype/{rel_path}'
 
             # Save locally in /tmp for immediate access
             local_cache_path = Path('/tmp/video_editor_cache') / rel_path
@@ -156,7 +156,7 @@ class DropboxStorage:
             # If not in local cache, check Dropbox
             if self.dbx:
                 try:
-                    dropbox_path = f'/Apps/output Horoskop/output/video_editor_prototype/{rel_path}'
+                    dropbox_path = f'/output/video_editor_prototype/{rel_path}'
                     self.dbx.files_get_metadata(dropbox_path)
                     return True
                 except:
@@ -169,7 +169,7 @@ class DropboxStorage:
             return (self.local_dropbox_path / rel_path).read_bytes()
         else:
             if self.dbx:
-                dropbox_path = f'/Apps/output Horoskop/output/video_editor_prototype/{rel_path}'
+                dropbox_path = f'/output/video_editor_prototype/{rel_path}'
                 _, response = self.dbx.files_download(dropbox_path)
                 return response.content
             raise Exception("File not accessible")
@@ -187,7 +187,7 @@ class DropboxStorage:
             from datetime import datetime
 
             # Read current sync queue
-            sync_queue_path = '/Apps/output Horoskop/output/video_editor_prototype/.sync_queue.json'
+            sync_queue_path = '/output/video_editor_prototype/.sync_queue.json'
             try:
                 _, response = self.dbx.files_download(sync_queue_path)
                 queue = json.loads(response.content)
