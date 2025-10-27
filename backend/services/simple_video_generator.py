@@ -107,6 +107,18 @@ class SimpleVideoGenerator:
 
         print(f"✓ Video generated: {output_path}", file=sys.stderr, flush=True)
 
+        # Upload to Dropbox if on Railway (not local Mac)
+        if not storage.use_local and storage.dbx:
+            try:
+                rel_path = f'previews/{output_filename}'
+                dropbox_path = f'/output/video_editor_prototype/{rel_path}'
+                with open(output_path, 'rb') as f:
+                    import dropbox
+                    storage.dbx.files_upload(f.read(), dropbox_path, mode=dropbox.files.WriteMode.overwrite)
+                print(f"☁️ Uploaded preview to Dropbox: {dropbox_path}", file=sys.stderr, flush=True)
+            except Exception as e:
+                print(f"⚠️ Dropbox upload warning: {e}", file=sys.stderr, flush=True)
+
         # Cleanup temporary files (keep image_cache for database)
         try:
             import shutil
