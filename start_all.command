@@ -46,7 +46,14 @@ sleep 3
 # Start Mac Sync Poller (Dropbox automatic sync)
 echo "🔄 Starting Mac Sync Poller..."
 cd "$SCRIPT_DIR" || exit 1
-nohup ./backend/venv/bin/python mac_sync_poller.py > logs/mac_sync.log 2>&1 &
+
+# Check if mac_sync_poller.py exists
+if [ ! -f "mac_sync_poller.py" ]; then
+    echo "❌ Error: mac_sync_poller.py not found in $SCRIPT_DIR"
+    exit 1
+fi
+
+nohup ./backend/venv/bin/python "$SCRIPT_DIR/mac_sync_poller.py" > logs/mac_sync.log 2>&1 &
 SYNC_PID=$!
 echo "✅ Mac Sync Poller started (PID: $SYNC_PID)"
 sleep 1
@@ -74,7 +81,19 @@ echo "✅ Frontend started (PID: $FRONTEND_PID)"
 # Wait for services to fully start
 echo ""
 echo "⏳ Waiting for services to initialize..."
-sleep 5
+echo "   (Frontend may take up to 90 seconds on first start or after cache clear)"
+
+# Wait and check progressively
+for i in {1..18}; do
+    sleep 5
+    if lsof -ti:5001 > /dev/null 2>&1 && lsof -ti:3000 > /dev/null 2>&1; then
+        echo "✅ All services ready after $((i * 5)) seconds!"
+        break
+    fi
+    if [ $i -eq 18 ]; then
+        echo "⚠️  Timeout after 90 seconds - checking status..."
+    fi
+done
 
 # Check if services are running
 echo ""

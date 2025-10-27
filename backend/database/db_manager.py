@@ -74,10 +74,17 @@ class DatabaseManager:
 
         # Add ai_image_model column to existing projects tables (migration)
         try:
-            cursor.execute("ALTER TABLE projects ADD COLUMN ai_image_model TEXT DEFAULT 'flux-schnell'")
+            cursor.execute("ALTER TABLE projects ADD COLUMN ai_image_model TEXT DEFAULT 'flux-dev'")
             conn.commit()
         except sqlite3.OperationalError:
             # Column already exists
+            pass
+
+        # Update existing projects that use flux-schnell to flux-dev (one-time migration)
+        try:
+            cursor.execute("UPDATE projects SET ai_image_model = 'flux-dev' WHERE ai_image_model = 'flux-schnell' OR ai_image_model IS NULL")
+            conn.commit()
+        except sqlite3.OperationalError:
             pass
 
         # Settings table for output folders
@@ -177,8 +184,8 @@ class DatabaseManager:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            'INSERT INTO projects (name) VALUES (?)',
-            (name,)
+            'INSERT INTO projects (name, ai_image_model) VALUES (?, ?)',
+            (name, 'flux-dev')
         )
         project_id = cursor.lastrowid
         conn.commit()

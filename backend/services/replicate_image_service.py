@@ -28,14 +28,14 @@ class ReplicateImageService:
             'flux-pro-1.1': 'black-forest-labs/flux-1.1-pro',  # BEST QUALITY (~$0.04/img, 20s)
             'flux-pro': 'black-forest-labs/flux-pro',  # Very good (~$0.055/img, 25s)
             'flux-dev': 'black-forest-labs/flux-dev',  # Good balance (~$0.025/img, 15s)
-            'flux-schnell': 'black-forest-labs/flux-schnell',  # Fast & cheap (~$0.003/img, 10s)
+            'flux-dev': 'black-forest-labs/flux-schnell',  # Fast & cheap (~$0.003/img, 10s)
             'ideogram-v3': 'ideogram-ai/ideogram-v3-quality',  # TEXT IN IMAGES! (~$0.09/img, 25s)
             'recraft-v3': 'recraft-ai/recraft-v3',  # STYLE VARIETY (~$0.04/img, 20s)
             'sdxl': 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'  # Legacy
         }
 
         # Default model (Flux Schnell = Fast & Cheap at $0.003/img)
-        self.default_model = 'flux-schnell'
+        self.default_model = 'flux-dev'
 
         # German to English keyword translation for better AI results
         self.translations = {

@@ -10,6 +10,11 @@ pkill -f "python app.py" 2>/dev/null
 pkill -f "venv/bin/python app.py" 2>/dev/null
 echo "✅ Python backend processes stopped"
 
+# Kill Mac Sync Poller
+echo "🔪 Killing Mac Sync Poller..."
+pkill -f "mac_sync_poller.py" 2>/dev/null
+echo "✅ Mac Sync Poller stopped"
+
 # Kill all Node/Vite frontend processes
 echo "🔪 Killing Node/Vite frontend processes..."
 pkill -f "vite" 2>/dev/null

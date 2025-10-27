@@ -199,16 +199,16 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 value={aiImageModel}
                 onChange={handleAiImageModelChange}
                 disabled={!project || loading}
-                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[145px]"
+                className="px-3 py-2 bg-dark border border-gray-600 rounded-lg text-xs hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px]"
                 title="AI Model for Scene Backgrounds"
               >
-                <option value="flux-pro-1.1">🎨 Pro 1.1 - $0.04</option>
-                <option value="flux-pro">🎨 Pro - $0.055</option>
-                <option value="flux-dev">🎨 Dev - $0.025</option>
-                <option value="flux-schnell">⚡ Fast - $0.003</option>
-                <option value="ideogram-v3">📝 Ideogram - $0.09</option>
-                <option value="recraft-v3">🎭 Recraft - $0.04</option>
-                <option value="sdxl">💰 SDXL - $0.003</option>
+                <option value="flux-pro-1.1">🎨 Flux Pro 1.1 - $0.04</option>
+                <option value="flux-pro">🎨 Flux Pro - $0.055</option>
+                <option value="flux-dev">🎨 Flux Dev - $0.025</option>
+                <option value="flux-schnell">⚡ Flux Schnell - $0.003</option>
+                <option value="ideogram-v3">📝 Ideogram v3 - $0.09</option>
+                <option value="recraft-v3">🎭 Recraft v3 - $0.04</option>
+                <option value="sdxl">💰 SDXL Turbo - $0.003</option>
               </select>
             </div>
 
