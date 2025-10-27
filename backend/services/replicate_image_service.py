@@ -19,7 +19,7 @@ class ReplicateImageService:
         os.environ['REPLICATE_API_TOKEN'] = self.api_token
 
         # Cache directory for generated images (centralized in Dropbox)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/video_editor_prototype/image_cache")
+        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/image_cache")
         self.cache_dir = Path(dropbox_path)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 

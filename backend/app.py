@@ -54,7 +54,7 @@ def health_check():
 @app.route('/api/previews/<filename>', methods=['GET'])
 def serve_preview(filename):
     """Serve generated preview videos from centralized Dropbox location"""
-    previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/previews'))
+    previews_dir = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews'))
     return send_from_directory(previews_dir, filename)
 
 @app.errorhandler(404)

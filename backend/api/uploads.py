@@ -7,7 +7,7 @@ import uuid
 uploads_bp = Blueprint('uploads', __name__)
 
 # Upload directories in Dropbox
-DROPBOX_BASE = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/video_editor_prototype/uploads'))
+DROPBOX_BASE = Path(os.path.expanduser('~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/uploads'))
 AUDIO_UPLOAD_DIR = DROPBOX_BASE / 'audio'
 IMAGE_UPLOAD_DIR = DROPBOX_BASE / 'images'
 
