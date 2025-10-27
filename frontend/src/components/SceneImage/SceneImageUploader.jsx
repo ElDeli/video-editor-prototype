@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Image, Upload, X, Loader } from 'lucide-react'
 import axios from 'axios'
 
-const API_BASE = 'http://localhost:5001/api'
+const API_BASE = '/api'
 
 export default function SceneImageUploader({ scene, onUpdate }) {
     const [showModal, setShowModal] = useState(false)

@@ -38,7 +38,7 @@ function VoiceSelector({ selectedVoice, onVoiceChange, disabled }) {
     const loadElevenLabsVoices = async () => {
       setLoadingElevenLabs(true)
       try {
-        const response = await fetch('http://localhost:5001/api/tts/elevenlabs/voices')
+        const response = await fetch('/api/tts/elevenlabs/voices')
         const data = await response.json()
         setElevenLabsVoices(data.voices || [])
       } catch (error) {
@@ -56,7 +56,7 @@ function VoiceSelector({ selectedVoice, onVoiceChange, disabled }) {
     const loadOpenAIVoices = async () => {
       setLoadingOpenAI(true)
       try {
-        const response = await fetch('http://localhost:5001/api/tts/openai/voices')
+        const response = await fetch('/api/tts/openai/voices')
         const data = await response.json()
         setOpenAIVoices(data.voices || [])
       } catch (error) {
