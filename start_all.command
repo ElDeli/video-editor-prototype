@@ -11,6 +11,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo "🧹 Cleaning up old processes..."
 pkill -f "python app.py" 2>/dev/null
 pkill -f "vite" 2>/dev/null
+pkill -f "mac_sync_poller.py" 2>/dev/null
 lsof -ti:3000 | xargs kill -9 2>/dev/null
 lsof -ti:5001 | xargs kill -9 2>/dev/null
 sleep 2
@@ -41,6 +42,14 @@ echo "✅ Backend started (PID: $BACKEND_PID)"
 
 # Wait for backend to start
 sleep 3
+
+# Start Mac Sync Poller (Dropbox automatic sync)
+echo "🔄 Starting Mac Sync Poller..."
+cd "$SCRIPT_DIR/backend" || exit 1
+nohup ./venv/bin/python mac_sync_poller.py > ../logs/mac_sync.log 2>&1 &
+SYNC_PID=$!
+echo "✅ Mac Sync Poller started (PID: $SYNC_PID)"
+sleep 1
 
 # Start Frontend (Vite React)
 echo "⚛️  Starting Frontend (Port 3000)..."
@@ -83,8 +92,10 @@ echo ""
 echo "🎉 Video Editor Prototype is ready!"
 echo ""
 echo "📝 Logs:"
-echo "   Backend:  $SCRIPT_DIR/logs/backend.log"
-echo "   Frontend: $SCRIPT_DIR/logs/frontend.log"
+echo "   Backend:    $SCRIPT_DIR/logs/backend.log"
+echo "   Frontend:   $SCRIPT_DIR/logs/frontend.log"
+echo "   Mac Sync:   $SCRIPT_DIR/logs/mac_sync.log"
 echo ""
+echo "🔄 Mac Sync Poller: Auto-syncing Railway uploads every 30s"
 echo "🌐 Open in browser: http://localhost:3000"
 echo ""
