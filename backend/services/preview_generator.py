@@ -15,7 +15,7 @@ class PreviewGenerator:
         self.output_dir.mkdir(exist_ok=True)
         self.translation_service = TranslationService()
 
-    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-dev', resolution='preview'):
+    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-dev', font_size=80, resolution='preview'):
         """
         Generate preview video from scenes using actual video generation
         """
@@ -47,7 +47,7 @@ class PreviewGenerator:
             video_gen = SimpleVideoGenerator(tts_voice=tts_voice)
 
             # Generate actual video file (now returns timing data too)
-            video_path, scene_timings = video_gen.generate_video(scenes, project_id, resolution=resolution, background_music_path=background_music_path, background_music_volume=background_music_volume, video_speed=video_speed, ai_image_model=ai_image_model)
+            video_path, scene_timings = video_gen.generate_video(scenes, project_id, resolution=resolution, background_music_path=background_music_path, background_music_volume=background_music_volume, video_speed=video_speed, ai_image_model=ai_image_model, font_size=font_size)
 
             # Get video filename for URL
             video_filename = Path(video_path).name

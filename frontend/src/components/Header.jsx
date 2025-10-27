@@ -12,7 +12,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
   const [aiImageModel, setAiImageModel] = useState('flux-dev')  // Changed from flux-schnell for better quality
-  const [fontSize, setFontSize] = useState(80)  // Default font size for Reels (50-120px range)
+  const [fontSize, setFontSize] = useState(50)  // Default font size for Reels (0-100px range)
   const [showSettings, setShowSettings] = useState(false)
 
   // Update selected voice, language, and AI model when project changes
@@ -227,8 +227,8 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 <span className="text-xs">📝</span>
                 <input
                   type="range"
-                  min="50"
-                  max="120"
+                  min="0"
+                  max="100"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
                   className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"

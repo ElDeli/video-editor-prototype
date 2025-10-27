@@ -304,8 +304,12 @@ def generate_preview(project_id):
         # Get AI image model from project (default to flux-dev - balanced quality & cost)
         ai_image_model = project.get('ai_image_model', 'flux-dev')
 
+        # Get fontSize from request body (default 80)
+        request_data = request.get_json() or {}
+        font_size = request_data.get('fontSize', 80)
+
         # Generate preview
-        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model)
+        result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model, font_size=font_size)
 
         # Update scene durations in database with actual timings from video generation
         if 'scene_timings' in result:
@@ -353,6 +357,9 @@ def export_video(project_id):
         video_speed = project.get('video_speed', 1.0)
         ai_image_model = project.get('ai_image_model', 'flux-dev')
 
+        # Get fontSize from request body (default 80)
+        font_size = data.get('fontSize', 80)
+
         # Generate export video (full resolution)
         result = preview_gen.generate_preview(
             project_id,
@@ -363,6 +370,7 @@ def export_video(project_id):
             target_language=target_language,
             video_speed=video_speed,
             ai_image_model=ai_image_model,
+            font_size=font_size,
             resolution=resolution
         )
 

@@ -35,7 +35,7 @@ class SimpleVideoGenerator:
         self.elevenlabs_service = ElevenLabsVoiceService()
         self.openai_tts_service = OpenAITTSService()
 
-    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-dev'):
+    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-dev', font_size=80):
         """Generate video using FFmpeg concat demuxer"""
         if not scenes:
             raise ValueError("No scenes to generate")
@@ -70,7 +70,8 @@ class SimpleVideoGenerator:
                     width,
                     height,
                     idx,
-                    ai_image_model  # Pass AI model from generate_video()
+                    ai_image_model,  # Pass AI model from generate_video()
+                    font_size  # Pass font_size from generate_video()
                 )
                 scene_videos.append(scene_video)
                 scene_timings.append({
@@ -131,7 +132,7 @@ class SimpleVideoGenerator:
         # Return both path and timing information
         return str(output_path), scene_timings
 
-    def _create_scene_video(self, scene, width, height, idx, ai_image_model='flux-dev'):
+    def _create_scene_video(self, scene, width, height, idx, ai_image_model='flux-dev', font_size=80):
         """Create single scene video with effects"""
         text = scene['script']
         bg_type = scene.get('background_type', 'solid')
@@ -175,7 +176,7 @@ class SimpleVideoGenerator:
 
         # Create image with text
         img_path = self.temp_dir / f"frame_{idx}.jpg"
-        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model)
+        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model, font_size)
 
         # Build effects filter chain
         filter_chain = VideoEffects.build_filter_chain(scene, width, height, video_duration)
@@ -263,7 +264,7 @@ class SimpleVideoGenerator:
             print(f"🎤 Using Edge TTS voice: {voice}", file=sys.stderr, flush=True)
             asyncio.run(self._generate_edge_tts(text, output_path))
 
-    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-dev'):
+    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-dev', font_size=80):
         """Create image with text"""
         # Always use Replicate AI image for keyword scenes
         if bg_type == 'keyword' and bg_value:
@@ -301,12 +302,12 @@ class SimpleVideoGenerator:
 
         draw = ImageDraw.Draw(img)
 
-        # Font
+        # Font (use font_size parameter)
         try:
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 50)
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
         except:
             try:
-                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", 40)
+                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", font_size)
             except:
                 font = ImageFont.load_default()
 
