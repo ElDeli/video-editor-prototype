@@ -1,8 +1,21 @@
 # 🤖 AI Model Integration - Technical Documentation
 
+**Version:** 2.0.0
+**Last Updated:** 2025-10-27
+**System Status:** ✅ 7 AI Models Active
+
+---
+
 ## Übersicht
 
-Dieses Dokument erklärt **genau**, wie ich die 7 AI Image Models in den Video Editor integriert habe und wie du das gleiche System für den **Batch Creator** verwenden kannst.
+Dieses Dokument erklärt **genau**, wie die 7 AI Image Models in den Video Editor integriert sind und wie das System funktioniert.
+
+**Aktuelle Models:**
+- Flux Schnell (DEFAULT - $0.003/img)
+- Flux Dev, Flux Pro, Flux Pro 1.1
+- Ideogram V3 (Text in images!)
+- Recraft V3 (Style variety)
+- SDXL (Budget alternative)
 
 ---
 

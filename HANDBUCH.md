@@ -1,5 +1,11 @@
 # 📽️ Video Editor Prototype - Benutzerhandbuch
 
+**Version:** 2.0.0
+**Letzte Aktualisierung:** 2025-10-27
+**System-Status:** ✅ 100% Funktionsfähig
+
+---
+
 ## 🚀 Inhaltsverzeichnis
 
 1. [System Starten & Stoppen](#system-starten--stoppen)
@@ -20,13 +26,14 @@
 
 ### Starten
 ```bash
-cd /Users/marcoglamngiw/Library/CloudStorage/Dropbox/Social\ Media/Video\ Editor\ Prototype/video_editor_prototype
+cd ~/Library/CloudStorage/Dropbox/Social\ Media/video_editor_prototype
 bash start_all.command
 ```
 
 **Was passiert:**
 - Backend startet auf Port 5001
 - Frontend startet auf Port 3000
+- **Mac Sync Poller startet** (für Railway-Sync)
 - Öffne Browser: http://localhost:3000
 
 ### Stoppen
