@@ -89,7 +89,7 @@ def regenerate_scene_image(scene_id):
         print(f"🔄 Regenerating image for scene {scene_id}: {new_keyword} (model: {ai_image_model})")
 
         # Generate new image (will create new cache entry due to variation suffix)
-        image_path = image_service.generate_image(new_keyword, width=608, height=1080, model=ai_image_model)
+        image_path = image_service.generate_image(new_keyword, width=608, height=1080, model=ai_image_model, force_regenerate=True)
 
         if not image_path:
             return jsonify({'error': 'Failed to generate new image'}), 500
