@@ -33,8 +33,8 @@ class VideoEffects:
         # NEW EFFECTS
         effect_vignette = scene.get('effect_vignette', 'none')
         effect_color_temp = scene.get('effect_color_temp', 'none')
-        # Saturation: Frontend sends FLOAT 0.0-2.0 (stored as INTEGER 1 in DB), use directly for FFmpeg
-        effect_saturation = scene.get('effect_saturation', 1)  # Direct FFmpeg value (1 = 100% = normal)
+        # Saturation: Frontend sends FLOAT 0.0-2.0 (stored as FLOAT 1.0 in DB), use directly for FFmpeg
+        effect_saturation = scene.get('effect_saturation', 1.0)  # Direct FFmpeg value (1.0 = 100% = normal)
         effect_film_grain = scene.get('effect_film_grain', 0)
         effect_glitch = scene.get('effect_glitch', 0)
         effect_chromatic = scene.get('effect_chromatic', 0)
@@ -84,7 +84,7 @@ class VideoEffects:
                 filters.append(shake_filter)
 
         # Apply color/visual effects
-        if effect_saturation != 1:  # DEBUG: Changed from 1.0 to 1 (INTEGER)
+        if effect_saturation != 1.0:  # FIXED: Now FLOAT (was INTEGER before migration)
             print(f"🔍 DEBUG: Applying saturation filter: value={effect_saturation} (type={type(effect_saturation).__name__})", flush=True)
             saturation_filter = VideoEffects._saturation_filter(effect_saturation)
             if saturation_filter:
@@ -555,7 +555,7 @@ class VideoEffects:
             # New effects
             scene.get('effect_vignette', 'none') != 'none' or
             scene.get('effect_color_temp', 'none') != 'none' or
-            scene.get('effect_saturation', 1) != 1 or
+            scene.get('effect_saturation', 1.0) != 1.0 or
             scene.get('effect_film_grain', 0) == 1 or
             scene.get('effect_glitch', 0) == 1 or
             scene.get('effect_chromatic', 0) == 1 or
@@ -595,7 +595,7 @@ class VideoEffects:
         if scene.get('effect_color_temp', 'none') != 'none':
             effects.append(f"Color Temp: {scene['effect_color_temp']}")
 
-        if scene.get('effect_saturation', 1) != 1:
+        if scene.get('effect_saturation', 1.0) != 1.0:
             effects.append(f"Saturation: {scene['effect_saturation']}")
 
         if scene.get('effect_film_grain', 0) == 1:

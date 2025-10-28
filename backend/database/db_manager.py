@@ -61,7 +61,7 @@ class Scene(Base):
     effect_tilt_3d = Column(String(50), default='none')
     effect_vignette = Column(String(50), default='none')  # FIXED: Was Integer, should be String
     effect_color_temp = Column(String(50), default='none')  # FIXED: Was Integer, should be String
-    effect_saturation = Column(Integer, default=1)  # 1 = FFmpeg direct value (100% saturation = normal)
+    effect_saturation = Column(Float, default=1.0)  # 1.0 = FFmpeg direct value (100% saturation = normal)
     effect_film_grain = Column(Integer, default=0)
     effect_glitch = Column(Integer, default=0)
     effect_chromatic = Column(Integer, default=0)
@@ -127,7 +127,7 @@ class DatabaseManager:
                 ("effect_tilt_3d", "VARCHAR(50)", "'none'"),
                 ("effect_vignette", "VARCHAR(50)", "'none'"),  # FIXED: Was INTEGER, needs to be VARCHAR
                 ("effect_color_temp", "VARCHAR(50)", "'none'"),  # FIXED: Was INTEGER, needs to be VARCHAR
-                ("effect_saturation", "INTEGER", "1"),  # FIXED: Default 1 (FFmpeg direct value, 100% = normal)
+                ("effect_saturation", "REAL", "1.0"),  # FIXED: Default 1.0 (FFmpeg direct value, 100% = normal)
                 ("effect_film_grain", "INTEGER", "0"),
                 ("effect_glitch", "INTEGER", "0"),
                 ("effect_chromatic", "INTEGER", "0"),
@@ -397,7 +397,7 @@ class DatabaseManager:
             'effect_tilt_3d': getattr(scene, 'effect_tilt_3d', 'none'),
             'effect_vignette': getattr(scene, 'effect_vignette', 'none'),  # FIXED: Default 'none' instead of 0
             'effect_color_temp': getattr(scene, 'effect_color_temp', 'none'),  # FIXED: Default 'none' instead of 0
-            'effect_saturation': getattr(scene, 'effect_saturation', 1),  # FIXED: Default 1 (FFmpeg direct, 100% = normal)
+            'effect_saturation': getattr(scene, 'effect_saturation', 1.0),  # FIXED: Default 1.0 (FFmpeg direct, 100% = normal)
             'effect_film_grain': getattr(scene, 'effect_film_grain', 0),
             'effect_glitch': getattr(scene, 'effect_glitch', 0),
             'effect_chromatic': getattr(scene, 'effect_chromatic', 0),
