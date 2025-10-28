@@ -167,6 +167,9 @@ class SimpleVideoGenerator:
 
         # Adjust duration for speed effect
         effect_speed = scene.get('effect_speed', 1.0)
+        # Protect against division by zero - minimum speed is 0.1
+        if effect_speed <= 0:
+            effect_speed = 1.0
         if effect_speed != 1.0:
             # Speed affects video duration but not audio
             # Audio will be stretched/compressed by FFmpeg
@@ -176,7 +179,7 @@ class SimpleVideoGenerator:
 
         # Create image with text
         img_path = self.temp_dir / f"frame_{idx}.jpg"
-        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model, font_size)
+        self._create_text_image(text, width, height, bg_type, bg_value, img_path, ai_image_model, font_size, scene)
 
         # Build effects filter chain
         filter_chain = VideoEffects.build_filter_chain(scene, width, height, video_duration)
@@ -264,23 +267,54 @@ class SimpleVideoGenerator:
             print(f"🎤 Using Edge TTS voice: {voice}", file=sys.stderr, flush=True)
             asyncio.run(self._generate_edge_tts(text, output_path))
 
-    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-dev', font_size=80):
+    def _create_text_image(self, text, width, height, bg_type, bg_value, output_path, ai_image_model='flux-dev', font_size=30, scene=None):
         """Create image with text"""
+        # Protect against font sizes that are too small for PIL TrueType rendering
+        if font_size <= 0:
+            font_size = 10  # Minimum 10px font size
+        elif font_size < 10:
+            print(f"   ⚠️  Font size {font_size} too small, using minimum 10px", file=sys.stderr, flush=True)
+            font_size = 10
+
         # Always use Replicate AI image for keyword scenes
         if bg_type == 'keyword' and bg_value:
             print(f"🎨 Using AI image for keyword: '{bg_value}'", file=sys.stderr, flush=True)
 
-            # Use the EXACT keyword (including variation number if present)
-            # This ensures we get the newly regenerated image, not the old cached one
-            ai_image_path = self.image_service.generate_image(bg_value, width, height, model=ai_image_model)
+            # Check if scene has existing image_path
+            existing_image_path = scene.get('image_path') if scene else None
 
-            if not ai_image_path or not os.path.exists(ai_image_path):
-                raise ValueError(f"Failed to get AI image for keyword: '{bg_value}'")
+            # DEBUG: Log scene data
+            print(f"🔍 DEBUG: scene = {scene}", file=sys.stderr, flush=True)
+            print(f"🔍 DEBUG: existing_image_path = {existing_image_path}", file=sys.stderr, flush=True)
+            if existing_image_path:
+                print(f"🔍 DEBUG: os.path.exists({existing_image_path}) = {os.path.exists(existing_image_path)}", file=sys.stderr, flush=True)
+
+            if existing_image_path and os.path.exists(existing_image_path):
+                # Reuse existing image
+                print(f"♻️  Reusing existing image: {existing_image_path}", file=sys.stderr, flush=True)
+                ai_image_path = existing_image_path
+            else:
+                # Generate new image
+                print(f"🆕 Generating new AI image...", file=sys.stderr, flush=True)
+                ai_image_path = self.image_service.generate_image(bg_value, width, height, model=ai_image_model)
+
+                if not ai_image_path or not os.path.exists(ai_image_path):
+                    raise ValueError(f"Failed to get AI image for keyword: '{bg_value}'")
+
+                # Save image_path to database
+                if scene and scene.get('id'):
+                    try:
+                        from database.db_manager import DatabaseManager
+                        db = DatabaseManager()
+                        db.update_scene(scene['id'], {'image_path': ai_image_path})
+                        print(f"💾 Saved image_path to database for scene {scene['id']}", file=sys.stderr, flush=True)
+                    except Exception as e:
+                        print(f"⚠️  Failed to save image_path to database: {e}", file=sys.stderr, flush=True)
 
             # Load AI-generated image
             img = Image.open(ai_image_path)
             img = img.resize((width, height))
-            print(f"✓ Loaded AI image from cache: {ai_image_path}", file=sys.stderr, flush=True)
+            print(f"✓ Loaded AI image: {ai_image_path}", file=sys.stderr, flush=True)
         elif bg_type == 'image' and bg_value:
             # Use uploaded custom image
             print(f"📸 Using custom uploaded image: '{bg_value}'", file=sys.stderr, flush=True)

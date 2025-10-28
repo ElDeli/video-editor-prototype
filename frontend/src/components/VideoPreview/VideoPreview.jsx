@@ -7,17 +7,29 @@ function VideoPreview({ previewData, seekToScene }) {
   const { project, scenes, selectedSceneId } = useProject()
   const playerRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const isPlayingRef = useRef(false) // Real-time playing status
+  const isPlayerReadyRef = useRef(false) // Track if player is ready for seeking
 
-  // Create a unique key for ReactPlayer to force reload when preview changes
-  // Use only the timestamp (not the URL!) to create a unique cache-busting param
-  const playerKey = previewData?._timestamp || Date.now()
+  // STABLE player key - only changes when preview data actually changes
+  // Use useRef to prevent re-generating key on every render!
+  const playerKeyRef = useRef(null)
+  if (!playerKeyRef.current || previewData?._timestamp !== playerKeyRef.current.previewTimestamp) {
+    playerKeyRef.current = {
+      key: previewData?._timestamp || Date.now(),
+      previewTimestamp: previewData?._timestamp
+    }
+    // Reset player ready status when new video loads
+    isPlayerReadyRef.current = false
+  }
+  const playerKey = playerKeyRef.current.key
 
   console.log('🎥 VideoPreview render:', {
     previewData,
     playerKey,
     selectedSceneId,
     scenesCount: scenes.length,
-    isPlaying
+    isPlaying,
+    isPlayerReady: isPlayerReadyRef.current
   })
 
   // Calculate scene start time based on previous scenes' durations
@@ -29,8 +41,36 @@ function VideoPreview({ previewData, seekToScene }) {
     return totalTime
   }
 
+  // Perform seek operation
+  const performSeek = (startTime) => {
+    // Set seeking flag
+    isSeekingRef.current = true
+
+    // Add small delay to ensure player is ready
+    setTimeout(() => {
+      if (playerRef.current) {
+        const seekTime = startTime + 0.1 // Small offset to ensure we're in the scene
+        console.log(`⏩ Seeking to ${seekTime}s (player ready: ${isPlayerReadyRef.current})`)
+        playerRef.current.seekTo(seekTime, 'seconds')
+        // DO NOT auto-play - let user manually press play
+        // This prevents unexpected jumps when clicking scenes during playback
+
+        // Clear seeking flag after a delay
+        setTimeout(() => {
+          isSeekingRef.current = false
+        }, 500)
+      } else {
+        console.error('❌ Player ref lost during setTimeout')
+        isSeekingRef.current = false
+      }
+    }, 100)
+  }
+
   // Track previous selectedSceneId to only jump when it actually changes
   const prevSelectedSceneIdRef = useRef(null)
+
+  // Track if we're currently seeking to prevent interference with video controls
+  const isSeekingRef = useRef(false)
 
   // Jump to selected scene when it changes
   useEffect(() => {
@@ -39,12 +79,20 @@ function VideoPreview({ previewData, seekToScene }) {
       return // No change, don't seek
     }
 
+    // Prevent seeking if already seeking
+    if (isSeekingRef.current) {
+      console.log('⏸️ Already seeking, ignoring...')
+      return
+    }
+
     console.log('🔄 Scene selection changed:', {
       selectedSceneId,
       previousSceneId: prevSelectedSceneIdRef.current,
       hasPlayer: !!playerRef.current,
       hasPreview: !!previewData,
-      scenesCount: scenes.length
+      scenesCount: scenes.length,
+      isPlayingState: isPlaying,
+      isPlayingRef: isPlayingRef.current
     })
 
     // Update the previous value
@@ -62,20 +110,28 @@ function VideoPreview({ previewData, seekToScene }) {
           startTime: `${startTime}s`,
           sceneIndex,
           totalScenes: scenes.length,
-          sceneDurations
+          sceneDurations,
+          isPlayerReady: isPlayerReadyRef.current
         })
 
-        // Add small delay to ensure player is ready
-        setTimeout(() => {
-          if (playerRef.current) {
-            const seekTime = startTime + 0.1 // Small offset to ensure we're in the scene
-            console.log(`⏩ Seeking to ${seekTime}s and auto-playing`)
-            playerRef.current.seekTo(seekTime, 'seconds')
-            setIsPlaying(true) // Auto-play after seeking
-          } else {
-            console.error('❌ Player ref lost during setTimeout')
-          }
-        }, 100)
+        // Check if player is ready before seeking
+        if (!isPlayerReadyRef.current) {
+          console.warn('⚠️ Player not ready yet, waiting...')
+          // Retry after player is ready
+          const retryInterval = setInterval(() => {
+            if (isPlayerReadyRef.current && playerRef.current) {
+              clearInterval(retryInterval)
+              performSeek(startTime)
+            }
+          }, 100)
+          // Timeout after 5 seconds
+          setTimeout(() => clearInterval(retryInterval), 5000)
+          return
+        }
+
+        performSeek(startTime)
+        // Update prevSelectedSceneIdRef after seeking
+        prevSelectedSceneIdRef.current = selectedSceneId
       } else {
         console.warn(`⚠️ Scene ${selectedSceneId} not found in scenes array`)
       }
@@ -101,8 +157,26 @@ function VideoPreview({ previewData, seekToScene }) {
               width="100%"
               height="100%"
               playing={isPlaying}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
+              onReady={() => {
+                console.log('✅ Player is ready!')
+                isPlayerReadyRef.current = true
+              }}
+              onPlay={() => {
+                console.log('▶️ Player onPlay callback - setting refs')
+                isPlayingRef.current = true
+                setIsPlaying(true)
+              }}
+              onPause={() => {
+                console.log('⏸️ Player onPause callback - setting refs')
+                isPlayingRef.current = false
+                setIsPlaying(false)
+              }}
+              onSeek={(seconds) => {
+                console.log(`🎯 Player seeked to ${seconds}s`)
+              }}
+              onError={(error) => {
+                console.error('❌ Player error:', error)
+              }}
             />
           </div>
         ) : (

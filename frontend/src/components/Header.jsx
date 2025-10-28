@@ -7,24 +7,21 @@ import MusicManager from './BackgroundMusic/MusicManager'
 import OutputFolderSettings from './Settings/OutputFolderSettings'
 
 function Header({ onPreviewGenerated, isEmbedded = false }) {
-  const { project, loading, scenes, updateScenesFromPreview, fetchProject } = useProject()
+  const { project, loading, scenes, updateScenesFromPreview, fetchProject, aiImageModel, setAiImageModel } = useProject()
   const [generating, setGenerating] = useState(false)
   const [selectedVoice, setSelectedVoice] = useState('de-DE-KatjaNeural')
   const [targetLanguage, setTargetLanguage] = useState('auto')
-  const [aiImageModel, setAiImageModel] = useState('flux-dev')  // Changed from flux-schnell for better quality
-  const [fontSize, setFontSize] = useState(80)  // Default font size for Reels (0-100px range)
+  const [fontSize, setFontSize] = useState(30)  // Default font size for Reels (10-100px range)
   const [showSettings, setShowSettings] = useState(false)
 
-  // Update selected voice, language, and AI model when project changes
+  // Update selected voice and language when project changes
+  // NOTE: We don't sync aiImageModel here - Context is the single source of truth
   useEffect(() => {
     if (project && project.tts_voice) {
       setSelectedVoice(project.tts_voice)
     }
     if (project && project.target_language) {
       setTargetLanguage(project.target_language)
-    }
-    if (project && project.ai_image_model) {
-      setAiImageModel(project.ai_image_model)
     }
   }, [project])
 
@@ -58,11 +55,14 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
   // Handle AI image model change
   const handleAiImageModelChange = async (e) => {
     const newModel = e.target.value
+    console.log('🎨 AI Model changed to:', newModel)
     setAiImageModel(newModel)
+    console.log('✅ Context updated with:', newModel)
 
     if (project) {
       try {
         await api.updateProject(project.id, { ai_image_model: newModel })
+        console.log('💾 Database updated with:', newModel)
       } catch (error) {
         console.error('Failed to update AI image model:', error)
       }
@@ -227,7 +227,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                 <span className="text-xs">📝</span>
                 <input
                   type="range"
-                  min="0"
+                  min="10"
                   max="100"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
@@ -240,45 +240,57 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
             </div>
           </div>
 
-          {/* Right side: Action Buttons */}
+          {/* Right side: Action Buttons - Aligned with Controls */}
           <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={handleGeneratePreview}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              disabled={!project || loading || scenes.length === 0 || generating}
-              title="Generate video preview"
-            >
-              <Play className="w-4 h-4" />
-              {generating ? 'Generating...' : 'Preview'}
-            </button>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] text-gray-400 px-1 invisible">Actions</label>
+              <button
+                onClick={handleGeneratePreview}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                disabled={!project || loading || scenes.length === 0 || generating}
+                title="Generate video preview"
+              >
+                <Play className="w-4 h-4" />
+                {generating ? 'Generating...' : 'Preview'}
+              </button>
+            </div>
 
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              disabled={!project || loading || scenes.length === 0 || generating}
-              title="Export final video"
-            >
-              <Download className="w-4 h-4" />
-              {generating ? 'Exporting...' : 'Export'}
-            </button>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] text-gray-400 px-1 invisible">Export</label>
+              <button
+                onClick={handleExport}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                disabled={!project || loading || scenes.length === 0 || generating}
+                title="Export final video"
+              >
+                <Download className="w-4 h-4" />
+                {generating ? 'Exporting...' : 'Export'}
+              </button>
+            </div>
 
-            <button
-              onClick={handleUploadToQueue}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-              disabled={!project || loading || scenes.length === 0 || generating}
-              title="Upload video to automation queue"
-            >
-              <Upload className="w-4 h-4" />
-              Upload to Queue
-            </button>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] text-gray-400 px-1 invisible">Upload</label>
+              <button
+                onClick={handleUploadToQueue}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                disabled={!project || loading || scenes.length === 0 || generating}
+                title="Upload video to automation queue"
+              >
+                <Upload className="w-4 h-4" />
+                Upload to Queue
+              </button>
+            </div>
 
-            <button
-              onClick={() => setShowSettings(true)}
-              className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
-              title="Output Folder Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[10px] text-gray-400 px-1 invisible">Settings</label>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
+                title="Output Folder Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -368,7 +380,7 @@ function Header({ onPreviewGenerated, isEmbedded = false }) {
                   <span className="text-sm text-gray-400">📝</span>
                   <input
                     type="range"
-                    min="50"
+                    min="10"
                     max="120"
                     value={fontSize}
                     onChange={(e) => setFontSize(Number(e.target.value))}

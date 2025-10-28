@@ -165,6 +165,10 @@ def bulk_add_scenes(project_id):
         if not full_script:
             return jsonify({'error': 'Script cannot be empty'}), 400
 
+        # Get AI image model from request (default to 'flux-dev')
+        ai_image_model = data.get('ai_image_model', 'flux-dev')
+        print(f"🎨 bulk_add_scenes received ai_image_model: {ai_image_model}")
+
         # Get target language from project (default to 'auto' - no translation)
         target_language = project.get('target_language', 'auto')
 
@@ -304,9 +308,9 @@ def generate_preview(project_id):
         # Get AI image model from project (default to flux-dev - balanced quality & cost)
         ai_image_model = project.get('ai_image_model', 'flux-dev')
 
-        # Get fontSize from request body (default 80)
-        request_data = request.get_json() or {}
-        font_size = request_data.get('fontSize', 80)
+        # Get fontSize from request body (default 30)
+        request_data = request.get_json(force=True, silent=True) or {}
+        font_size = request_data.get('fontSize', 30)
 
         # Generate preview
         result = preview_gen.generate_preview(project_id, scenes, tts_voice=tts_voice, background_music_path=background_music_path, background_music_volume=background_music_volume, target_language=target_language, video_speed=video_speed, ai_image_model=ai_image_model, font_size=font_size)
@@ -331,6 +335,9 @@ def generate_preview(project_id):
 
         return jsonify(result)
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ PREVIEW GENERATION ERROR:\n{error_details}", file=sys.stderr, flush=True)
         return jsonify({'error': str(e)}), 500
 
 @projects_bp.route('/projects/<int:project_id>/export', methods=['POST'])
@@ -357,8 +364,8 @@ def export_video(project_id):
         video_speed = project.get('video_speed', 1.0)
         ai_image_model = project.get('ai_image_model', 'flux-dev')
 
-        # Get fontSize from request body (default 80)
-        font_size = data.get('fontSize', 80)
+        # Get fontSize from request body (default 30)
+        font_size = data.get('fontSize', 30)
 
         # Generate export video (full resolution)
         result = preview_gen.generate_preview(
@@ -497,12 +504,36 @@ def get_thumbnail(keyword):
         if not image_service:
             return jsonify({'error': 'Image service not available'}), 503
 
+        # Get scene_id from query parameters (if provided)
+        scene_id = request.args.get('scene_id')
+
+        # Get AI image model from project (if scene_id is provided)
+        ai_image_model = 'flux-dev'  # default
+        if scene_id:
+            try:
+                scene = db.get_scene(int(scene_id))
+                if scene and scene.get('project_id'):
+                    project = db.get_project(scene['project_id'])
+                    if project and project.get('ai_image_model'):
+                        ai_image_model = project['ai_image_model']
+                        print(f"🎨 /api/thumbnails using model from project: {ai_image_model}", file=sys.stderr, flush=True)
+            except Exception as e:
+                print(f"⚠️  Could not load ai_image_model from project: {e}", file=sys.stderr, flush=True)
+
         # Use full-size image for now (already cached, so it's fast)
         # Later we can optimize to generate smaller thumbnails
-        image_path = image_service.generate_image(keyword, width=608, height=1080)
+        image_path = image_service.generate_image(keyword, width=608, height=1080, model=ai_image_model)
 
         if not image_path or not os.path.exists(image_path):
             return jsonify({'error': f'Failed to generate thumbnail for: {keyword}'}), 500
+
+        # Save image_path to database if scene_id is provided
+        if scene_id:
+            try:
+                db.update_scene(int(scene_id), {'image_path': image_path})
+                print(f"✓ Saved image_path to database for scene {scene_id}", file=sys.stderr, flush=True)
+            except Exception as e:
+                print(f"⚠️  Failed to save image_path to database: {e}", file=sys.stderr, flush=True)
 
         return send_file(image_path, mimetype='image/jpeg')
 

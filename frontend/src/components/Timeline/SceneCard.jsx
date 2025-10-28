@@ -280,7 +280,8 @@ function SceneCard({ scene, index, isSelected, onSelect, onPreviewRegenerated })
   const getThumbnailUrl = () => {
     if (scene.background_type === 'keyword' && scene.background_value) {
       // Generate thumbnail URL from backend API with timestamp to force reload
-      return `${API_BASE}/thumbnails/${encodeURIComponent(scene.background_value)}?t=${thumbnailTimestamp}`
+      // Pass scene_id so backend can save image_path to database
+      return `${API_BASE}/thumbnails/${encodeURIComponent(scene.background_value)}?scene_id=${scene.id}&t=${thumbnailTimestamp}`
     }
     return null
   }

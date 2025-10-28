@@ -8,6 +8,8 @@ export function ProjectProvider({ children }) {
   const [scenes, setScenes] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedSceneId, setSelectedSceneId] = useState(null)
+  const [scriptText, setScriptText] = useState('')
+  const [aiImageModel, setAiImageModel] = useState('flux-dev')
 
   // Create new project
   const createProject = async (name) => {
@@ -93,7 +95,7 @@ export function ProjectProvider({ children }) {
   // Bulk add scenes from full script
   const addScenesFromScript = async (fullScript) => {
     try {
-      const newScenes = await api.bulkAddScenes(project.id, fullScript)
+      const newScenes = await api.bulkAddScenes(project.id, fullScript, aiImageModel)
       setScenes(prev => [...prev, ...newScenes])
       return newScenes
     } catch (error) {
@@ -126,6 +128,10 @@ export function ProjectProvider({ children }) {
     loading,
     selectedSceneId,
     setSelectedSceneId,
+    scriptText,
+    setScriptText,
+    aiImageModel,
+    setAiImageModel,
     createProject,
     loadProject,
     fetchProject,

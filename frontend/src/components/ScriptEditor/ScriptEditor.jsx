@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Plus, Sparkles, Wand2 } from 'lucide-react'
+import { Plus, Sparkles, Wand2, RefreshCw } from 'lucide-react'
 import { useProject } from '../../hooks/useProject'
 
 function ScriptEditor() {
-  const { project, addScene, addScenesFromScript } = useProject()
-  const [scriptText, setScriptText] = useState('')
+  const { project, addScene, addScenesFromScript, scenes, deleteScene, loadProject, scriptText, setScriptText, aiImageModel } = useProject()
   const [loading, setLoading] = useState(false)
+  console.log('🎬 ScriptEditor rendered with aiImageModel:', aiImageModel)
   const [useAiImprovement, setUseAiImprovement] = useState(false)
   const [improving, setImproving] = useState(false)
   const [targetDuration, setTargetDuration] = useState(null) // null = original length
+  const [recreating, setRecreating] = useState(false)
 
   const handleAddScene = async () => {
     if (!scriptText.trim()) return
@@ -68,12 +69,77 @@ function ScriptEditor() {
       }
 
       await addScenesFromScript(finalScript)
-      setScriptText('')
+      // Keep text in textarea - don't clear it
     } catch (error) {
       console.error('Failed to auto-create scenes:', error)
       alert('Failed to create scenes. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRecreateScenes = async () => {
+    if (!scriptText.trim() || !project) return
+
+    setRecreating(true)
+    try {
+      // Step 1: Fetch CURRENT scenes from backend (avoid stale state)
+      console.log(`🔄 Fetching current scenes for project ${project.id}...`)
+      const projectData = await fetch(`/api/projects/${project.id}`).then(res => res.json())
+      const currentScenes = projectData.scenes || []
+      const sceneCount = currentScenes.length
+
+      if (sceneCount === 0) {
+        alert('No scenes to recreate!')
+        return
+      }
+
+      const confirmed = confirm(
+        `⚠️ Recreate All Scenes?\n\n` +
+        `This will DELETE all ${sceneCount} existing scenes and create completely NEW scenes with:\n` +
+        `• Different text variations\n` +
+        `• New AI-generated images\n` +
+        `• Fresh scene breakdown\n\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Continue?`
+      )
+
+      if (!confirmed) {
+        setRecreating(false)
+        return
+      }
+
+      // Step 2: Delete all existing scenes (from backend data, not stale state)
+      console.log(`🗑️ Deleting ${sceneCount} existing scenes...`)
+      for (const scene of currentScenes) {
+        await deleteScene(scene.id)
+      }
+      console.log(`✓ Deleted all scenes`)
+
+      // Step 3: Improve script if AI is enabled
+      let finalScript = scriptText.trim()
+      if (useAiImprovement) {
+        finalScript = await handleImproveScript(finalScript, targetDuration)
+        setScriptText(finalScript)
+      }
+
+      // Step 4: Create new scenes from script
+      console.log(`🎬 Creating new scenes...`)
+      await addScenesFromScript(finalScript)
+      console.log(`✓ Recreated scenes successfully`)
+
+      // Step 5: Reload project from backend to get fresh thumbnails
+      console.log(`🔄 Reloading project from backend to refresh thumbnails...`)
+      await loadProject(project.id)
+      console.log(`✓ Project reloaded with fresh scene data`)
+
+      // Note: scriptText is now in Context, so it persists across loadProject re-renders
+
+    } catch (error) {
+      console.error('Failed to recreate scenes:', error)
+      alert('Failed to recreate scenes. Please try again.')
+    } finally {
+      setRecreating(false)
     }
   }
 
@@ -132,13 +198,13 @@ function ScriptEditor() {
           placeholder="Write your full script here... (paste complete script for auto-scene creation)"
           value={scriptText}
           onChange={(e) => setScriptText(e.target.value)}
-          disabled={!project || loading || improving}
+          disabled={!project || loading || improving || recreating}
         />
 
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleAddScene}
-            disabled={!project || !scriptText.trim() || loading || improving}
+            disabled={!project || !scriptText.trim() || loading || improving || recreating}
             className="py-3 bg-primary hover:bg-blue-600 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
@@ -147,13 +213,26 @@ function ScriptEditor() {
 
           <button
             onClick={handleAutoCreateScenes}
-            disabled={!project || !scriptText.trim() || loading || improving}
+            disabled={!project || !scriptText.trim() || loading || improving || recreating}
             className="py-3 bg-purple-600 hover:bg-purple-700 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Wand2 className={`w-4 h-4 ${(loading || improving) ? 'animate-spin' : ''}`} />
             {improving ? 'Improving...' : loading ? 'Creating...' : 'Auto-Create Scenes'}
           </button>
         </div>
+
+        {/* Recreate Scenes Button - Only show if scenes exist */}
+        {scenes && scenes.length > 0 && (
+          <button
+            onClick={handleRecreateScenes}
+            disabled={!project || !scriptText.trim() || loading || improving || recreating}
+            className="w-full py-3 bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            title="Delete all scenes and create completely new ones"
+          >
+            <RefreshCw className={`w-4 h-4 ${recreating ? 'animate-spin' : ''}`} />
+            {recreating ? `Recreating ${scenes.length} Scenes...` : `Recreate All ${scenes.length} Scenes`}
+          </button>
+        )}
       </div>
 
       <div className="mt-4 p-3 bg-dark rounded-lg border border-gray-700">
@@ -161,6 +240,7 @@ function ScriptEditor() {
         <ul className="text-xs text-gray-400 space-y-1">
           <li>• <strong>Add 1 Scene</strong>: Creates single scene from text</li>
           <li>• <strong>Auto-Create</strong>: Splits full script into multiple scenes automatically</li>
+          <li>• <strong>Recreate All</strong>: Deletes all scenes & creates completely new ones (new text & images)</li>
           <li>• <strong>AI Toggle</strong>: Enable to improve script with AI before scene creation</li>
           <li>• Separate paragraphs with double Enter for better splitting</li>
         </ul>

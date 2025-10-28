@@ -49,20 +49,23 @@ const api = {
     await axios.post(`${API_BASE_URL}/projects/${projectId}/scenes/reorder`, { scene_ids: sceneIds })
   },
 
-  bulkAddScenes: async (projectId, fullScript) => {
-    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/scenes/bulk`, { full_script: fullScript })
+  bulkAddScenes: async (projectId, fullScript, aiImageModel = 'flux-dev') => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/scenes/bulk`, {
+      full_script: fullScript,
+      ai_image_model: aiImageModel
+    })
     return response.data
   },
 
   // Preview
-  generatePreview: async (projectId) => {
-    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/preview`)
+  generatePreview: async (projectId, fontSize = 30) => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/preview`, { fontSize })
     return response.data
   },
 
   // Export
-  exportVideo: async (projectId, format = '1080p') => {
-    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/export`, { format })
+  exportVideo: async (projectId, format = '1080p', fontSize = 30) => {
+    const response = await axios.post(`${API_BASE_URL}/projects/${projectId}/export`, { format, fontSize })
     return response.data
   },
 

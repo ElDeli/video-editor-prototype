@@ -15,7 +15,7 @@ class PreviewGenerator:
         self.output_dir.mkdir(exist_ok=True)
         self.translation_service = TranslationService()
 
-    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-dev', font_size=80, resolution='preview'):
+    def generate_preview(self, project_id, scenes, tts_voice='de-DE-KatjaNeural', background_music_path=None, background_music_volume=7, target_language='auto', video_speed=1.0, ai_image_model='flux-dev', font_size=30, resolution='preview'):
         """
         Generate preview video from scenes using actual video generation
         """
@@ -55,11 +55,15 @@ class PreviewGenerator:
             # Calculate total duration from actual timings
             total_duration = sum(t['duration'] for t in scene_timings)
 
+            # Generate timestamp for cache busting
+            timestamp = int(datetime.now().timestamp() * 1000)  # Milliseconds for better precision
+
             return {
-                'preview_id': f"preview_{project_id}_{int(datetime.now().timestamp())}",
+                'preview_id': f"preview_{project_id}_{timestamp}",
                 'preview_path': video_path,
                 'video_path': video_path,  # Add video_path for export endpoint
                 'preview_url': f'/api/previews/{video_filename}',
+                '_timestamp': timestamp,  # Add _timestamp field for frontend cache busting
                 'total_duration': total_duration,
                 'scene_count': len(scenes),
                 'status': 'ready',

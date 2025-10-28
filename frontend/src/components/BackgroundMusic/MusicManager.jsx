@@ -158,24 +158,39 @@ export default function MusicManager({ project, onUpdate }) {
     return (
         <>
             <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setShowModal(true)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded text-sm mt-[14px] ${
-                        currentMusic
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                    title={currentMusic ? 'Change Background Music' : 'Add Background Music'}
-                >
-                    <Music className="w-4 h-4" />
-                    {currentMusic ? 'Change Music' : 'Add Music'}
-                </button>
+                {/* Music Button + Filename + Remove Button Container - Fixed width */}
+                <div className="flex flex-col gap-0.5">
+                    <label className="text-[10px] text-gray-400 px-1 invisible">Music</label>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded text-sm flex-shrink-0 ${
+                                currentMusic
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                            title={currentMusic ? 'Change Background Music' : 'Add Background Music'}
+                        >
+                            <Music className="w-4 h-4" />
+                            {currentMusic ? 'Change Music' : 'Add Music'}
+                        </button>
 
-                {currentMusic && (
-                    <div className="text-sm text-gray-300 max-w-[150px] truncate overflow-hidden whitespace-nowrap" title={getMusicFileName()}>
-                        🎵 {getMusicFileName()}
+                        {/* Filename - Fixed space reserved */}
+                        <div className={`text-sm text-gray-300 w-[120px] truncate overflow-hidden whitespace-nowrap ${!currentMusic && 'invisible'}`} title={getMusicFileName()}>
+                            🎵 {currentMusic ? getMusicFileName() : 'placeholder'}
+                        </div>
+
+                        {/* Remove Button - Right after music */}
+                        <button
+                            onClick={removeMusic}
+                            disabled={!currentMusic}
+                            className={`p-2 rounded text-white flex-shrink-0 ${currentMusic ? 'bg-red-600 hover:bg-red-700' : 'invisible'}`}
+                            title="Remove music"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
                     </div>
-                )}
+                </div>
 
                 {/* Volume Control - Always visible but disabled if no music */}
                 <div className="flex flex-col gap-0.5">
@@ -220,16 +235,6 @@ export default function MusicManager({ project, onUpdate }) {
                         <span className="text-gray-300 text-xs w-12">{videoSpeed.toFixed(2)}x</span>
                     </div>
                 </div>
-
-                {currentMusic && (
-                    <button
-                        onClick={removeMusic}
-                        className="p-2 bg-red-600 hover:bg-red-700 rounded text-white"
-                        title="Remove music"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
             </div>
 
             {showModal && (
