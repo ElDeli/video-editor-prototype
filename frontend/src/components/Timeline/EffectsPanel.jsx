@@ -35,7 +35,7 @@ function EffectsPanel({ scene, isOpen, onToggle }) {
   const [isSaving, setIsSaving] = useState(false)
   const [activeCategory, setActiveCategory] = useState('motion') // motion, color, creative, timing
 
-  // Update local state when scene changes
+  // Update local state when scene changes (but only when scene.id changes to prevent overwriting user edits)
   useEffect(() => {
     setEffects({
       effect_zoom: scene.effect_zoom || 'none',
@@ -58,7 +58,7 @@ function EffectsPanel({ scene, isOpen, onToggle }) {
       effect_lens_flare: scene.effect_lens_flare || 0,
       effect_kaleidoscope: scene.effect_kaleidoscope || 0
     })
-  }, [scene])
+  }, [scene.id])
 
   const handleEffectChange = (key, value) => {
     setEffects(prev => ({ ...prev, [key]: value }))
@@ -67,10 +67,18 @@ function EffectsPanel({ scene, isOpen, onToggle }) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
+      // DEBUG: Log effect values before saving
+      const effectKeys = ['effect_vignette', 'effect_color_temp', 'effect_saturation']
+      const effectValues = effectKeys.reduce((acc, key) => {
+        acc[key] = { value: effects[key], type: typeof effects[key] }
+        return acc
+      }, {})
+      console.log('🔍 DEBUG: Saving effects (Scene', scene.id, '):', effectValues)
+
       await updateScene(scene.id, effects)
-      console.log('✅ Effects saved:', effects)
+      console.log('✅ Effects saved successfully')
     } catch (error) {
-      console.error('Failed to save effects:', error)
+      console.error('❌ Failed to save effects:', error)
       alert('Failed to save effects')
     } finally {
       setIsSaving(false)
@@ -90,7 +98,7 @@ function EffectsPanel({ scene, isOpen, onToggle }) {
       effects.effect_tilt_3d !== 'none' ||
       effects.effect_vignette !== 'none' ||
       effects.effect_color_temp !== 'none' ||
-      effects.effect_saturation !== 1.0 ||
+      effects.effect_saturation !== 1 ||  // DEBUG: Changed from 1.0 to 1 (INTEGER)
       effects.effect_film_grain === 1 ||
       effects.effect_glitch === 1 ||
       effects.effect_chromatic === 1 ||

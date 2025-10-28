@@ -33,7 +33,8 @@ class VideoEffects:
         # NEW EFFECTS
         effect_vignette = scene.get('effect_vignette', 'none')
         effect_color_temp = scene.get('effect_color_temp', 'none')
-        effect_saturation = scene.get('effect_saturation', 1.0)
+        # Saturation: Frontend sends FLOAT 0.0-2.0 (stored as INTEGER 1 in DB), use directly for FFmpeg
+        effect_saturation = scene.get('effect_saturation', 1)  # Direct FFmpeg value (1 = 100% = normal)
         effect_film_grain = scene.get('effect_film_grain', 0)
         effect_glitch = scene.get('effect_glitch', 0)
         effect_chromatic = scene.get('effect_chromatic', 0)
@@ -66,7 +67,7 @@ class VideoEffects:
             if rotate_filter:
                 filters.append(rotate_filter)
 
-        if effect_bounce == 1:
+        if effect_bounce > 0:  # FIXED: Changed from == 1 to > 0
             bounce_filter = VideoEffects._bounce_filter(duration, effect_intensity)
             if bounce_filter:
                 filters.append(bounce_filter)
@@ -77,23 +78,27 @@ class VideoEffects:
                 filters.append(tilt_filter)
 
         # Apply shake effect (uses crop, so can be separate)
-        if effect_shake == 1:
+        if effect_shake > 0:  # FIXED: Changed from == 1 to > 0
             shake_filter = VideoEffects._shake_filter(effect_intensity)
             if shake_filter:
                 filters.append(shake_filter)
 
         # Apply color/visual effects
-        if effect_saturation != 1.0:
+        if effect_saturation != 1:  # DEBUG: Changed from 1.0 to 1 (INTEGER)
+            print(f"🔍 DEBUG: Applying saturation filter: value={effect_saturation} (type={type(effect_saturation).__name__})", flush=True)
             saturation_filter = VideoEffects._saturation_filter(effect_saturation)
             if saturation_filter:
                 filters.append(saturation_filter)
+                print(f"   FFmpeg saturation filter: {saturation_filter}", flush=True)
 
         if effect_color_temp != 'none':
+            print(f"🔍 DEBUG: Applying color_temp filter: value={effect_color_temp} (type={type(effect_color_temp).__name__})", flush=True)
             color_temp_filter = VideoEffects._color_temp_filter(effect_color_temp, effect_intensity)
             if color_temp_filter:
                 filters.append(color_temp_filter)
+                print(f"   FFmpeg color_temp filter: {color_temp_filter}", flush=True)
 
-        if effect_chromatic == 1:
+        if effect_chromatic > 0:  # FIXED: Changed from == 1 to > 0
             chromatic_filter = VideoEffects._chromatic_aberration_filter(effect_intensity)
             if chromatic_filter:
                 filters.append(chromatic_filter)
@@ -103,32 +108,34 @@ class VideoEffects:
             if blur_filter:
                 filters.append(blur_filter)
 
-        if effect_glitch == 1:
+        if effect_glitch > 0:  # FIXED: Changed from == 1 to > 0
             glitch_filter = VideoEffects._glitch_filter(effect_intensity)
             if glitch_filter:
                 filters.append(glitch_filter)
 
         if effect_vignette != 'none':
+            print(f"🔍 DEBUG: Applying vignette filter: value={effect_vignette} (type={type(effect_vignette).__name__})", flush=True)
             vignette_filter = VideoEffects._vignette_filter(effect_vignette, effect_intensity)
             if vignette_filter:
                 filters.append(vignette_filter)
+                print(f"   FFmpeg vignette filter: {vignette_filter}", flush=True)
 
-        if effect_film_grain == 1:
+        if effect_film_grain > 0:  # FIXED: Changed from == 1 to > 0
             film_grain_filter = VideoEffects._film_grain_filter(effect_intensity)
             if film_grain_filter:
                 filters.append(film_grain_filter)
 
-        if effect_light_leaks == 1:
+        if effect_light_leaks > 0:  # FIXED: Changed from == 1 to > 0
             light_leaks_filter = VideoEffects._light_leaks_filter(effect_intensity)
             if light_leaks_filter:
                 filters.append(light_leaks_filter)
 
-        if effect_lens_flare == 1:
+        if effect_lens_flare > 0:  # FIXED: Changed from == 1 to > 0
             lens_flare_filter = VideoEffects._lens_flare_filter(effect_intensity)
             if lens_flare_filter:
                 filters.append(lens_flare_filter)
 
-        if effect_kaleidoscope == 1:
+        if effect_kaleidoscope > 0:  # FIXED: Changed from == 1 to > 0
             kaleidoscope_filter = VideoEffects._kaleidoscope_filter()
             if kaleidoscope_filter:
                 filters.append(kaleidoscope_filter)
@@ -144,56 +151,118 @@ class VideoEffects:
 
     @staticmethod
     def _combined_zoompan_filter(zoom_type, pan_type, width, height, duration, intensity):
-        """Combine zoom and pan into a single zoompan filter"""
+        """Combine zoom and pan using scale + crop for reliable movement"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         frames = int(duration * 30)
+        if frames <= 0:
+            frames = 3  # Minimum 3 frames
         max_scale = 1.0 + (intensity * 0.5)
 
-        # Scale input to 3.5x size to give zoompan room to work
-        # Using 3.5x provides maximum headroom for zoom/pan while maintaining quality
-        # Higher scaling = less visible interpolation artifacts and smoother motion
+        # Scale input to 3.5x size to give room for panning and zooming
+        # Using 3.5x provides maximum headroom while maintaining quality
         scale_factor = 3.5
         scaled_width = int(width * scale_factor)
         scaled_height = int(height * scale_factor)
-        pan_distance = int(scaled_width * 0.15 * intensity)
 
-        # Determine zoom expression
-        if zoom_type == 'zoom_in':
-            zoom_expr = f"1+({max_scale}-1)*on/{frames}"
-        elif zoom_type == 'zoom_out':
-            zoom_expr = f"{max_scale}-({max_scale}-1)*on/{frames}"
-        elif zoom_type == 'ken_burns':
-            zoom_expr = f"1+({max_scale}-1)*on/{frames}"
-        elif zoom_type == 'pulse':
-            pulse_intensity = 0.1 + (intensity * 0.1)
-            zoom_expr = f"1+{pulse_intensity}*sin(on/{frames}*3.14159*4)"
-        else:
-            zoom_expr = "1"  # No zoom
+        # Pan distance: 100% of output width for maximum movement at intensity 1.0
+        # At intensity 0.5, this gives 50% movement (half the screen width)
+        pan_distance = int(width * intensity)
 
-        # Determine pan expression (rounded to whole pixels to prevent shaking)
-        x_expr = "trunc(iw/2-(iw/zoom/2))"  # Default: centered, rounded
-        y_expr = "trunc(ih/2-(ih/zoom/2))"  # Default: centered, rounded
+        # CENTER POSITIONS (where crop window starts when centered)
+        center_x = int((scaled_width - width) / 2)
+        center_y = int((scaled_height - height) / 2)
 
-        if pan_type == 'left':
-            x_expr = f"trunc(iw/2-(iw/zoom/2)-on/{frames}*{pan_distance})"
-        elif pan_type == 'right':
-            x_expr = f"trunc(iw/2-(iw/zoom/2)+on/{frames}*{pan_distance})"
-        elif pan_type == 'up':
-            y_expr = f"trunc(ih/2-(ih/zoom/2)-on/{frames}*{pan_distance})"
-        elif pan_type == 'down':
-            y_expr = f"trunc(ih/2-(ih/zoom/2)+on/{frames}*{pan_distance})"
-        elif zoom_type == 'ken_burns':
-            # Ken Burns has built-in horizontal drift
-            x_expr = f"trunc(iw/2-(iw/zoom/2)+sin(on/{frames}*3.14159)*50)"
+        # If we have BOTH zoom and pan, use zoompan filter (complex effects)
+        if zoom_type and zoom_type != 'none' and pan_type and pan_type != 'none':
+            # Determine zoom expression
+            if zoom_type == 'zoom_in':
+                zoom_expr = f"1+({max_scale}-1)*on/{frames}"
+            elif zoom_type == 'zoom_out':
+                zoom_expr = f"{max_scale}-({max_scale}-1)*on/{frames}"
+            elif zoom_type == 'ken_burns':
+                zoom_expr = f"1+({max_scale}-1)*on/{frames}"
+            elif zoom_type == 'pulse':
+                pulse_intensity = 0.1 + (intensity * 0.1)
+                zoom_expr = f"1+{pulse_intensity}*sin(on/{frames}*3.14159*4)"
+            else:
+                zoom_expr = "1"
 
-        # Scale up 3x with lanczos (high quality), fix aspect ratio, apply zoompan, output at target size
-        # setsar=1 ensures square pixels and prevents sub-pixel distortion
-        return f"scale={scaled_width}:{scaled_height}:flags=lanczos,setsar=1,zoompan=z='{zoom_expr}':d={frames}:x='{x_expr}':y='{y_expr}':s={width}x{height}:fps=30"
+            # Pan expressions for zoompan
+            x_expr = "floor(iw/2-(iw/zoom/2))"
+            y_expr = "floor(ih/2-(ih/zoom/2))"
+
+            if pan_type == 'left':
+                x_expr = f"floor(iw/2-(iw/zoom/2)-on/{frames}*{pan_distance})"
+            elif pan_type == 'right':
+                x_expr = f"floor(iw/2-(iw/zoom/2)+on/{frames}*{pan_distance})"
+            elif pan_type == 'up':
+                y_expr = f"floor(ih/2-(ih/zoom/2)-on/{frames}*{pan_distance})"
+            elif pan_type == 'down':
+                y_expr = f"floor(iw/2-(ih/zoom/2)+on/{frames}*{pan_distance})"
+
+            return f"scale={scaled_width}:{scaled_height}:flags=lanczos,setsar=1,zoompan=z='{zoom_expr}':d={frames}:x='{x_expr}':y='{y_expr}':s={width}x{height}:fps=30"
+
+        # If we have PAN ONLY (no zoom), use crop filter for reliable movement
+        elif pan_type and pan_type != 'none':
+            # Crop expressions: move the crop window across the scaled image
+            # Using 'n' (frame number) variable for smooth animation
+            if pan_type == 'left':
+                # Move crop window left (decreasing x)
+                crop_x = f"'{center_x}-n/{frames}*{pan_distance}'"
+                crop_y = f"'{center_y}'"
+            elif pan_type == 'right':
+                # Move crop window right (increasing x)
+                crop_x = f"'{center_x}+n/{frames}*{pan_distance}'"
+                crop_y = f"'{center_y}'"
+            elif pan_type == 'up':
+                # Move crop window up (decreasing y)
+                crop_x = f"'{center_x}'"
+                crop_y = f"'{center_y}-n/{frames}*{pan_distance}'"
+            elif pan_type == 'down':
+                # Move crop window down (increasing y)
+                crop_x = f"'{center_x}'"
+                crop_y = f"'{center_y}+n/{frames}*{pan_distance}'"
+            else:
+                crop_x = f"'{center_x}'"
+                crop_y = f"'{center_y}'"
+
+            # Scale to 3.5x, then crop a moving window, then scale to output size
+            return f"scale={scaled_width}:{scaled_height}:flags=lanczos,setsar=1,crop={width}:{height}:{crop_x}:{crop_y},scale={width}:{height}:flags=lanczos"
+
+        # If we have ZOOM ONLY, use zoompan
+        elif zoom_type and zoom_type != 'none':
+            if zoom_type == 'zoom_in':
+                zoom_expr = f"1+({max_scale}-1)*on/{frames}"
+            elif zoom_type == 'zoom_out':
+                zoom_expr = f"{max_scale}-({max_scale}-1)*on/{frames}"
+            elif zoom_type == 'ken_burns':
+                zoom_expr = f"1+({max_scale}-1)*on/{frames}"
+                # Ken Burns has built-in horizontal drift
+                x_expr = f"floor(iw/2-(iw/zoom/2)+sin(on/{frames}*3.14159)*50)"
+                return f"scale={scaled_width}:{scaled_height}:flags=lanczos,setsar=1,zoompan=z='{zoom_expr}':d={frames}:x='{x_expr}':y='floor(ih/2-(ih/zoom/2))':s={width}x{height}:fps=30"
+            elif zoom_type == 'pulse':
+                pulse_intensity = 0.1 + (intensity * 0.1)
+                zoom_expr = f"1+{pulse_intensity}*sin(on/{frames}*3.14159*4)"
+            else:
+                zoom_expr = "1"
+
+            return f"scale={scaled_width}:{scaled_height}:flags=lanczos,setsar=1,zoompan=z='{zoom_expr}':d={frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={width}x{height}:fps=30"
+
+        # NO EFFECTS: just scale and return
+        return f"scale={width}:{height}:flags=lanczos,setsar=1"
 
     @staticmethod
     def _zoom_filter(zoom_type, width, height, duration, intensity):
         """Generate zoom filter"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         # Calculate frame count (30fps)
         frames = int(duration * 30)
+        if frames <= 0:
+            frames = 3  # Minimum 3 frames
 
         # Scale factor based on intensity (0.5 = 1.2x max, 1.0 = 1.5x max)
         max_scale = 1.0 + (intensity * 0.5)
@@ -229,8 +298,13 @@ class VideoEffects:
     @staticmethod
     def _pan_filter(pan_type, width, height, duration, intensity):
         """Generate pan filter - integrated into zoompan if zoom is also present"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         # Pan distance based on intensity (pixels to move)
         frames = int(duration * 30)
+        if frames <= 0:
+            frames = 3  # Minimum 3 frames
         pan_distance = int(width * 0.15 * intensity)  # 15% to 30% of width
 
         # If this is called without zoom, we use zoompan with z=1 (no zoom)
@@ -259,6 +333,10 @@ class VideoEffects:
     @staticmethod
     def _speed_filter(speed):
         """Generate speed filter (setpts)"""
+        # Protect against division by zero
+        if speed <= 0:
+            speed = 1.0
+
         if speed == 1.0:
             return None
 
@@ -279,6 +357,9 @@ class VideoEffects:
     @staticmethod
     def _fade_filter(fade_type, duration):
         """Generate fade filter"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         # Fade duration: 0.5 seconds for in/out
         fade_duration = min(0.5, duration / 4)  # Max 25% of clip duration
 
@@ -289,7 +370,7 @@ class VideoEffects:
             fade_start = duration - fade_duration
             return f"fade=t=out:st={fade_start}:d={fade_duration}"
 
-        elif fade_type == 'both':
+        elif fade_type in ['both', 'in_out']:  # FIXED: Support both 'both' and 'in_out' for combined fade
             fade_start = duration - fade_duration
             return f"fade=t=in:st=0:d={fade_duration},fade=t=out:st={fade_start}:d={fade_duration}"
 
@@ -350,8 +431,12 @@ class VideoEffects:
         """Generate chromatic aberration (RGB color shift)"""
         # Split RGB channels and shift them slightly
         shift = int(2 + (intensity * 6))  # 2 to 8 pixels
-        # This creates the RGB split effect
-        return f"split=3[r][g][b];[r]lutrgb=g=0:b=0,crop=iw-{shift}:ih:0:0[r1];[g]lutrgb=r=0:b=0[g1];[b]lutrgb=r=0:g=0,crop=iw-{shift}:ih:{shift}:0[b1];[r1][g1]blend=all_mode=addition[rg];[rg][b1]blend=all_mode=addition"
+        # FIXED: Ensure shift is even for H.264 compatibility (width must be divisible by 2)
+        if shift % 2 != 0:
+            shift = shift - 1  # Make it even
+        half_shift = shift // 2
+        # Red shifts left, green centered, blue shifts right
+        return f"split=3[r][g][b];[r]lutrgb=g=0:b=0,crop=iw-{shift}:ih:0:0[r1];[g]lutrgb=r=0:b=0,crop=iw-{shift}:ih:{half_shift}:0[g1];[b]lutrgb=r=0:g=0,crop=iw-{shift}:ih:{shift}:0[b1];[r1][g1]blend=all_mode=addition[rg];[rg][b1]blend=all_mode=addition"
 
     @staticmethod
     def _blur_filter(blur_type, intensity):
@@ -372,7 +457,12 @@ class VideoEffects:
     @staticmethod
     def _rotate_filter(rotate_type, duration):
         """Generate rotation filter"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         frames = int(duration * 30)
+        if frames <= 0:
+            frames = 3  # Minimum 3 frames
 
         if rotate_type == 'clockwise':
             # Full 360° rotation clockwise - FFmpeg auto-calculates output size
@@ -383,11 +473,23 @@ class VideoEffects:
         elif rotate_type == 'wobble':
             # Wobble back and forth
             return f"rotate='sin(t)*0.2':c=none"
+        elif rotate_type == 'rotate_90':  # FIXED: Support rotate_90 as alias for static 90° rotation
+            # Static 90° clockwise rotation
+            return f"rotate=PI/2:c=none"
+        elif rotate_type == 'rotate_180':  # Support 180° rotation
+            # Static 180° rotation
+            return f"rotate=PI:c=none"
+        elif rotate_type == 'rotate_270':  # Support 270° rotation
+            # Static 270° rotation
+            return f"rotate=3*PI/2:c=none"
         return None
 
     @staticmethod
     def _bounce_filter(duration, intensity):
         """Generate bounce effect (rhythmic vertical movement)"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         # Bounce up and down using sine wave
         bounce_height = int(20 + (intensity * 40))  # 20 to 60 pixels
         frequency = 3  # 3 bounces during duration
@@ -396,21 +498,26 @@ class VideoEffects:
     @staticmethod
     def _tilt_3d_filter(tilt_type, duration, intensity):
         """Generate 3D tilt/perspective effect"""
+        # Protect against zero or negative duration
+        if duration <= 0:
+            duration = 0.1  # Minimum 0.1 seconds
         frames = int(duration * 30)
+        if frames <= 0:
+            frames = 3  # Minimum 3 frames
 
-        if tilt_type == 'left':
+        if tilt_type in ['left', 'tilt_left']:  # FIXED: Support both 'left' and 'tilt_left'
             # Tilt perspective to left
             strength = 0.2 * intensity
             return f"perspective=x0=0:y0=0:x1='W*{strength}':y1=0:x2='W*(1-{strength})':y2=H:x3=W:y3=H:interpolation=linear"
-        elif tilt_type == 'right':
+        elif tilt_type in ['right', 'tilt_right']:  # FIXED: Support both 'right' and 'tilt_right'
             # Tilt perspective to right
             strength = 0.2 * intensity
             return f"perspective=x0='W*{strength}':y0=0:x1=W:y1=0:x2=0:y2=H:x3='W*(1-{strength})':y3=H:interpolation=linear"
-        elif tilt_type == 'forward':
+        elif tilt_type in ['forward', 'tilt_forward']:  # FIXED: Support both 'forward' and 'tilt_forward'
             # Tilt forward (top smaller)
             strength = 0.2 * intensity
             return f"perspective=x0='W*{strength}':y0=0:x1='W*(1-{strength})':y1=0:x2=0:y2=H:x3=W:y3=H:interpolation=linear"
-        elif tilt_type == 'backward':
+        elif tilt_type in ['backward', 'tilt_backward']:  # FIXED: Support both 'backward' and 'tilt_backward'
             # Tilt backward (bottom smaller)
             strength = 0.2 * intensity
             return f"perspective=x0=0:y0=0:x1=W:y1=0:x2='W*{strength}':y2=H:x3='W*(1-{strength})':y3=H:interpolation=linear"
@@ -448,7 +555,7 @@ class VideoEffects:
             # New effects
             scene.get('effect_vignette', 'none') != 'none' or
             scene.get('effect_color_temp', 'none') != 'none' or
-            scene.get('effect_saturation', 1.0) != 1.0 or
+            scene.get('effect_saturation', 1) != 1 or
             scene.get('effect_film_grain', 0) == 1 or
             scene.get('effect_glitch', 0) == 1 or
             scene.get('effect_chromatic', 0) == 1 or
@@ -488,7 +595,7 @@ class VideoEffects:
         if scene.get('effect_color_temp', 'none') != 'none':
             effects.append(f"Color Temp: {scene['effect_color_temp']}")
 
-        if scene.get('effect_saturation', 1.0) != 1.0:
+        if scene.get('effect_saturation', 1) != 1:
             effects.append(f"Saturation: {scene['effect_saturation']}")
 
         if scene.get('effect_film_grain', 0) == 1:

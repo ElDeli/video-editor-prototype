@@ -37,9 +37,25 @@ def update_scene(scene_id):
         if not data:
             return jsonify({'error': 'No data provided'}), 400
 
+        # DEBUG: Log effect values if any are being updated
+        effect_keys = ['effect_vignette', 'effect_color_temp', 'effect_saturation']
+        effect_updates = {k: v for k, v in data.items() if k in effect_keys}
+        if effect_updates:
+            print(f"🔍 DEBUG: Scene {scene_id} effect updates: {effect_updates}", file=sys.stderr, flush=True)
+            print(f"   Types: {', '.join([f'{k}={type(v).__name__}' for k, v in effect_updates.items()])}", file=sys.stderr, flush=True)
+
         updated_scene = db.update_scene(scene_id, data)
+
+        # DEBUG: Log result effect values
+        if effect_updates:
+            result_effects = {k: updated_scene.get(k) for k in effect_keys if k in updated_scene}
+            print(f"   Result: {result_effects}", file=sys.stderr, flush=True)
+
         return jsonify(updated_scene)
     except Exception as e:
+        error_details = traceback.format_exc()
+        print(f"✗ Error updating scene {scene_id}: {e}", file=sys.stderr, flush=True)
+        print(error_details, file=sys.stderr, flush=True)
         return jsonify({'error': str(e)}), 500
 
 @scenes_bp.route('/scenes/<int:scene_id>', methods=['DELETE'])
@@ -89,7 +105,7 @@ def regenerate_scene_image(scene_id):
         print(f"🔄 Regenerating image for scene {scene_id}: {new_keyword} (model: {ai_image_model})")
 
         # Generate new image (will create new cache entry due to variation suffix)
-        image_path = image_service.generate_image(new_keyword, width=608, height=1080, model=ai_image_model, force_regenerate=True)
+        image_path = image_service.generate_image(new_keyword, width=608, height=1080, model=ai_image_model)
 
         if not image_path:
             return jsonify({'error': 'Failed to generate new image'}), 500

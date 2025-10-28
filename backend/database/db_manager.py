@@ -1,6 +1,11 @@
 """
 Database Manager using SQLAlchemy
-Supports both SQLite and PostgreSQL
+
+PRIMARY DATABASE: PostgreSQL on Railway (shared between local and online)
+FALLBACK: SQLite (nur für Development ohne DATABASE_URL)
+
+WICHTIG: In Production wird IMMER PostgreSQL verwendet!
+SQLite dient nur als Notfall-Fallback für lokale Entwicklung.
 """
 import os
 from datetime import datetime
@@ -43,12 +48,31 @@ class Scene(Base):
     background_type = Column(String(50), default='solid')
     background_value = Column(Text)
     audio_path = Column(Text)
+    image_path = Column(Text)
     effect_zoom = Column(String(50), default='none')
     effect_pan = Column(String(50), default='none')
     effect_speed = Column(Float, default=1.0)
     effect_shake = Column(Integer, default=0)
     effect_fade = Column(String(50), default='none')
     effect_intensity = Column(Float, default=0.5)
+    # New effects (added to fix Creative/Motion effects not saving)
+    effect_rotate = Column(String(50), default='none')
+    effect_bounce = Column(Integer, default=0)
+    effect_tilt_3d = Column(String(50), default='none')
+    effect_vignette = Column(String(50), default='none')  # FIXED: Was Integer, should be String
+    effect_color_temp = Column(String(50), default='none')  # FIXED: Was Integer, should be String
+    effect_saturation = Column(Integer, default=1)  # 1 = FFmpeg direct value (100% saturation = normal)
+    effect_film_grain = Column(Integer, default=0)
+    effect_glitch = Column(Integer, default=0)
+    effect_chromatic = Column(Integer, default=0)
+    effect_blur = Column(String(50), default='none')
+    effect_light_leaks = Column(Integer, default=0)
+    effect_lens_flare = Column(Integer, default=0)
+    effect_kaleidoscope = Column(Integer, default=0)
+    # Sound effects
+    sound_effect_path = Column(Text)
+    sound_effect_volume = Column(Integer, default=100)
+    sound_effect_offset = Column(Float, default=0.0)
     created_at = Column(TIMESTAMP, default=func.now())
     updated_at = Column(TIMESTAMP, default=func.now(), onupdate=func.now())
 
@@ -88,6 +112,50 @@ class DatabaseManager:
                 print(f"✅ Migrated {updated} projects from flux-schnell to flux-dev")
         except Exception as e:
             print(f"Migration warning: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+        # Add new effect columns to scenes table (one-time migration)
+        from sqlalchemy import text
+        session = self.Session()
+        try:
+            # Check if columns exist by trying to add them
+            new_columns = [
+                ("effect_rotate", "VARCHAR(50)", "'none'"),
+                ("effect_bounce", "INTEGER", "0"),
+                ("effect_tilt_3d", "VARCHAR(50)", "'none'"),
+                ("effect_vignette", "VARCHAR(50)", "'none'"),  # FIXED: Was INTEGER, needs to be VARCHAR
+                ("effect_color_temp", "VARCHAR(50)", "'none'"),  # FIXED: Was INTEGER, needs to be VARCHAR
+                ("effect_saturation", "INTEGER", "1"),  # FIXED: Default 1 (FFmpeg direct value, 100% = normal)
+                ("effect_film_grain", "INTEGER", "0"),
+                ("effect_glitch", "INTEGER", "0"),
+                ("effect_chromatic", "INTEGER", "0"),
+                ("effect_blur", "VARCHAR(50)", "'none'"),
+                ("effect_light_leaks", "INTEGER", "0"),
+                ("effect_lens_flare", "INTEGER", "0"),
+                ("effect_kaleidoscope", "INTEGER", "0"),
+                ("sound_effect_path", "TEXT", "NULL"),
+                ("sound_effect_volume", "INTEGER", "100"),
+                ("sound_effect_offset", "REAL", "0.0"),
+            ]
+
+            added_columns = []
+            for col_name, col_type, default_val in new_columns:
+                try:
+                    alter_sql = f"ALTER TABLE scenes ADD COLUMN {col_name} {col_type} DEFAULT {default_val}"
+                    session.execute(text(alter_sql))
+                    session.commit()
+                    added_columns.append(col_name)
+                except Exception as col_error:
+                    # Column already exists or other error - rollback and continue
+                    session.rollback()
+                    pass
+
+            if added_columns:
+                print(f"✅ Added {len(added_columns)} new effect columns to scenes table: {', '.join(added_columns)}")
+        except Exception as e:
+            print(f"Migration warning (adding columns): {e}")
             session.rollback()
         finally:
             session.close()
@@ -233,8 +301,15 @@ class DatabaseManager:
                 return None
 
             for key in ['script', 'duration', 'background_type', 'background_value',
-                        'audio_path', 'effect_zoom', 'effect_pan', 'effect_speed',
-                        'effect_shake', 'effect_fade', 'effect_intensity']:
+                        'audio_path', 'image_path', 'effect_zoom', 'effect_pan', 'effect_speed',
+                        'effect_shake', 'effect_fade', 'effect_intensity',
+                        # New effects (added to fix effects not saving)
+                        'effect_rotate', 'effect_bounce', 'effect_tilt_3d',
+                        'effect_vignette', 'effect_color_temp', 'effect_saturation',
+                        'effect_film_grain', 'effect_glitch', 'effect_chromatic', 'effect_blur',
+                        'effect_light_leaks', 'effect_lens_flare', 'effect_kaleidoscope',
+                        # Sound effects
+                        'sound_effect_path', 'sound_effect_volume', 'sound_effect_offset']:
                 if key in scene_data:
                     setattr(scene, key, scene_data[key])
 
@@ -309,12 +384,31 @@ class DatabaseManager:
             'background_type': scene.background_type,
             'background_value': scene.background_value,
             'audio_path': scene.audio_path,
+            'image_path': scene.image_path,
             'effect_zoom': scene.effect_zoom,
             'effect_pan': scene.effect_pan,
             'effect_speed': scene.effect_speed,
             'effect_shake': scene.effect_shake,
             'effect_fade': scene.effect_fade,
             'effect_intensity': scene.effect_intensity,
+            # New effects (added to fix Creative/Motion effects not being returned)
+            'effect_rotate': getattr(scene, 'effect_rotate', 'none'),
+            'effect_bounce': getattr(scene, 'effect_bounce', 0),
+            'effect_tilt_3d': getattr(scene, 'effect_tilt_3d', 'none'),
+            'effect_vignette': getattr(scene, 'effect_vignette', 'none'),  # FIXED: Default 'none' instead of 0
+            'effect_color_temp': getattr(scene, 'effect_color_temp', 'none'),  # FIXED: Default 'none' instead of 0
+            'effect_saturation': getattr(scene, 'effect_saturation', 1),  # FIXED: Default 1 (FFmpeg direct, 100% = normal)
+            'effect_film_grain': getattr(scene, 'effect_film_grain', 0),
+            'effect_glitch': getattr(scene, 'effect_glitch', 0),
+            'effect_chromatic': getattr(scene, 'effect_chromatic', 0),
+            'effect_blur': getattr(scene, 'effect_blur', 'none'),
+            'effect_light_leaks': getattr(scene, 'effect_light_leaks', 0),
+            'effect_lens_flare': getattr(scene, 'effect_lens_flare', 0),
+            'effect_kaleidoscope': getattr(scene, 'effect_kaleidoscope', 0),
+            # Sound effects
+            'sound_effect_path': getattr(scene, 'sound_effect_path', None),
+            'sound_effect_volume': getattr(scene, 'sound_effect_volume', 100),
+            'sound_effect_offset': getattr(scene, 'sound_effect_offset', 0.0),
             'created_at': scene.created_at.strftime('%Y-%m-%d %H:%M:%S') if scene.created_at else None,
             'updated_at': scene.updated_at.strftime('%Y-%m-%d %H:%M:%S') if scene.updated_at else None
         }
