@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 import json
 import asyncio
 import edge_tts
+import platform
 from services.replicate_image_service import ReplicateImageService
 from services.video_effects import VideoEffects
 from services.elevenlabs_voice_service import ElevenLabsVoiceService
@@ -337,9 +338,6 @@ class SimpleVideoGenerator:
         draw = ImageDraw.Draw(img)
 
         # Font (use font_size parameter) - platform-agnostic
-        import platform
-        import os
-
         font = None
         font_paths = []
 
