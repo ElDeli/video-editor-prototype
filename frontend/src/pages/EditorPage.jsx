@@ -35,9 +35,9 @@ function EditorPage() {
       {/* Pass embedded state to Header to hide title */}
       <Header onPreviewGenerated={handlePreviewGenerated} isEmbedded={isEmbedded} />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Panel - Script Editor */}
-        <div className="w-1/4 border-r border-gray-700 overflow-y-auto">
+        <div className="w-full md:w-1/2 lg:w-1/4 border-r border-gray-700 overflow-y-auto">
           <ScriptEditor />
         </div>
 
@@ -49,7 +49,7 @@ function EditorPage() {
         </div>
 
         {/* Right Panel - Video Preview */}
-        <div className="w-1/3 border-l border-gray-700 overflow-y-auto">
+        <div className="w-full md:w-1/2 lg:w-1/3 border-l border-gray-700 overflow-y-auto">
           <VideoPreview previewData={previewData} />
         </div>
       </div>
