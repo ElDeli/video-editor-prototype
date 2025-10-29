@@ -78,6 +78,15 @@ class Scene(Base):
 
     project = relationship("Project", back_populates="scenes")
 
+class OutputFolder(Base):
+    __tablename__ = 'output_folders'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    path = Column(Text, nullable=False)
+    is_default = Column(Integer, default=0)
+    created_at = Column(TIMESTAMP, default=func.now())
+
 class DatabaseManager:
     def __init__(self, db_url=None):
         if db_url is None:
@@ -359,6 +368,88 @@ class DatabaseManager:
         finally:
             session.close()
 
+    # Output Folders Management
+    def get_output_folders(self):
+        """Get all output folders"""
+        session = self.Session()
+        try:
+            folders = session.query(OutputFolder).order_by(
+                OutputFolder.is_default.desc(),
+                OutputFolder.name.asc()
+            ).all()
+            return [self._output_folder_to_dict(f) for f in folders]
+        finally:
+            session.close()
+
+    def add_output_folder(self, name, path):
+        """Add new output folder"""
+        session = self.Session()
+        try:
+            folder = OutputFolder(name=name, path=path, is_default=0)
+            session.add(folder)
+            session.commit()
+            folder_id = folder.id
+            session.close()
+            return self.get_output_folder(folder_id)
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def get_output_folder(self, folder_id):
+        """Get output folder by ID"""
+        session = self.Session()
+        try:
+            folder = session.query(OutputFolder).filter(OutputFolder.id == folder_id).first()
+            if not folder:
+                return None
+            return self._output_folder_to_dict(folder)
+        finally:
+            session.close()
+
+    def delete_output_folder(self, folder_id):
+        """Delete output folder"""
+        session = self.Session()
+        try:
+            folder = session.query(OutputFolder).filter(OutputFolder.id == folder_id).first()
+            if folder:
+                session.delete(folder)
+                session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def set_default_output_folder(self, folder_id):
+        """Set default output folder"""
+        session = self.Session()
+        try:
+            # Remove default from all folders
+            session.query(OutputFolder).update({OutputFolder.is_default: 0})
+            # Set new default
+            folder = session.query(OutputFolder).filter(OutputFolder.id == folder_id).first()
+            if folder:
+                folder.is_default = 1
+                session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
+    def get_default_output_folder(self):
+        """Get default output folder"""
+        session = self.Session()
+        try:
+            folder = session.query(OutputFolder).filter(OutputFolder.is_default == 1).first()
+            if not folder:
+                return None
+            return self._output_folder_to_dict(folder)
+        finally:
+            session.close()
+
     # Helper methods
     def _project_to_dict(self, project):
         return {
@@ -411,4 +502,13 @@ class DatabaseManager:
             'sound_effect_offset': getattr(scene, 'sound_effect_offset', 0.0),
             'created_at': scene.created_at.strftime('%Y-%m-%d %H:%M:%S') if scene.created_at else None,
             'updated_at': scene.updated_at.strftime('%Y-%m-%d %H:%M:%S') if scene.updated_at else None
+        }
+
+    def _output_folder_to_dict(self, folder):
+        return {
+            'id': folder.id,
+            'name': folder.name,
+            'path': folder.path,
+            'is_default': folder.is_default,
+            'created_at': folder.created_at.strftime('%Y-%m-%d %H:%M:%S') if folder.created_at else None
         }
