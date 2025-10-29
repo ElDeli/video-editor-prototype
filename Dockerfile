@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     xz-utils \
     libmagic1 \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install FFmpeg 8.0 static binary (same version as local macOS)

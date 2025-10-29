@@ -336,14 +336,40 @@ class SimpleVideoGenerator:
 
         draw = ImageDraw.Draw(img)
 
-        # Font (use font_size parameter)
-        try:
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
-        except:
-            try:
-                font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", font_size)
-            except:
-                font = ImageFont.load_default()
+        # Font (use font_size parameter) - platform-agnostic
+        import platform
+        import os
+
+        font = None
+        font_paths = []
+
+        # Platform-specific font paths
+        if platform.system() == "Darwin":  # macOS
+            font_paths = [
+                "/System/Library/Fonts/Helvetica.ttc",
+                "/System/Library/Fonts/Arial.ttf",
+                "/System/Library/Fonts/SFNSText.ttf"
+            ]
+        else:  # Linux (Railway)
+            font_paths = [
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"
+            ]
+
+        # Try each font path
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    break
+                except Exception as e:
+                    continue
+
+        # Fallback (should never happen if fonts are installed correctly)
+        if font is None:
+            print(f"⚠️  WARNING: No TrueType font found on {platform.system()}, text size may not work correctly", file=sys.stderr, flush=True)
+            font = ImageFont.load_default()
 
         # Word wrap
         wrapped_text = self._wrap_text(text, width - 100, font, draw)
