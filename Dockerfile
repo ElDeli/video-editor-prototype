@@ -11,11 +11,22 @@ RUN npm run build
 # Stage 2: Setup Python Backend
 FROM python:3.11-slim
 
-# Install system dependencies
+# Install system dependencies (excluding ffmpeg - will install 8.0 manually)
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
+    wget \
+    xz-utils \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install FFmpeg 8.0 static binary (same version as local macOS)
+# Source: John Van Sickle's FFmpeg builds (official, trusted source)
+RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz \
+    && tar -xf ffmpeg-release-amd64-static.tar.xz \
+    && mv ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ \
+    && mv ffmpeg-*-amd64-static/ffprobe /usr/local/bin/ \
+    && rm -rf ffmpeg-*-amd64-static* \
+    && chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe \
+    && ffmpeg -version
 
 WORKDIR /app
 
