@@ -25,6 +25,10 @@ class SimpleVideoGenerator:
         self.output_dir = storage.get_save_dir('previews')
         print(f"🎬 SimpleVideoGenerator initialized with output_dir: {self.output_dir}", file=sys.stderr, flush=True)
 
+        # Separate directory for temporary exports (not saved to previews)
+        self.temp_exports_dir = Path("./temp_exports")
+        self.temp_exports_dir.mkdir(exist_ok=True)
+
         self.temp_dir = Path(tempfile.gettempdir()) / "video_editor_simple"
         self.temp_dir.mkdir(exist_ok=True)
         self.tts_voice = tts_voice  # Can be Edge, ElevenLabs, or OpenAI voice
@@ -36,8 +40,12 @@ class SimpleVideoGenerator:
         self.elevenlabs_service = ElevenLabsVoiceService()
         self.openai_tts_service = OpenAITTSService()
 
-    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-dev', font_size=80):
-        """Generate video using FFmpeg concat demuxer"""
+    def generate_video(self, scenes, project_id, resolution='preview', background_music_path=None, background_music_volume=7, video_speed=1.0, ai_image_model='flux-dev', font_size=80, temp_export=False):
+        """Generate video using FFmpeg concat demuxer
+
+        Args:
+            temp_export: If True, save to temp_exports directory (for export downloads only, not previews)
+        """
         if not scenes:
             raise ValueError("No scenes to generate")
 
@@ -103,14 +111,20 @@ class SimpleVideoGenerator:
         # Concatenate using FFmpeg
         print(f"Concatenating {len(scene_videos)} videos...", file=sys.stderr, flush=True)
         output_filename = f"video_{project_id}_{resolution}.mp4"
-        output_path = self.output_dir / output_filename
+
+        # Use temp_exports_dir for export downloads, previews go to output_dir
+        if temp_export:
+            output_path = self.temp_exports_dir / output_filename
+            print(f"📦 Generating export to temp location (for download): {output_path}", file=sys.stderr, flush=True)
+        else:
+            output_path = self.output_dir / output_filename
 
         self._concat_videos_ffmpeg(scene_videos, output_path, background_music_path, background_music_volume, video_speed)
 
         print(f"✓ Video generated: {output_path}", file=sys.stderr, flush=True)
 
-        # Upload to Dropbox if on Railway (not local Mac)
-        if not storage.use_local and storage.dbx:
+        # Upload to Dropbox if on Railway (not local Mac) - skip for temp exports
+        if not temp_export and not storage.use_local and storage.dbx:
             try:
                 rel_path = f'previews/{output_filename}'
                 dropbox_path = f'/output/video_editor_prototype/{rel_path}'

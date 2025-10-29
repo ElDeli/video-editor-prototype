@@ -367,7 +367,7 @@ def export_video(project_id):
         # Get fontSize from request body (default 30)
         font_size = data.get('fontSize', 30)
 
-        # Generate export video (full resolution)
+        # Generate export video (full resolution) - save to temp location for download only
         result = preview_gen.generate_preview(
             project_id,
             scenes,
@@ -378,7 +378,8 @@ def export_video(project_id):
             video_speed=video_speed,
             ai_image_model=ai_image_model,
             font_size=font_size,
-            resolution=resolution
+            resolution=resolution,
+            temp_export=True  # Save to temp_exports folder, not previews
         )
 
         return jsonify({
@@ -404,31 +405,33 @@ def download_video(project_id):
         # Get resolution from query parameter (default 1080p)
         resolution = request.args.get('resolution', '1080p')
 
-        # Build video path (check Dropbox location first, then local)
-        dropbox_path = os.path.expanduser("~/Dropbox/Apps/output Horoskop/output/video_editor_prototype/previews")
+        # Build video path in temp_exports folder (for export downloads only)
+        temp_exports_dir = os.path.join(os.path.dirname(__file__), '..', 'temp_exports')
         video_filename = f"video_{project_id}_{resolution}.mp4"
-
-        # Try Dropbox location first (unified path)
-        video_path = os.path.join(dropbox_path, video_filename)
-
-        # Fallback to local backend/previews if not found in Dropbox
-        if not os.path.exists(video_path):
-            local_preview_dir = os.path.join(os.path.dirname(__file__), '..', 'previews')
-            video_path = os.path.join(local_preview_dir, video_filename)
+        video_path = os.path.join(temp_exports_dir, video_filename)
 
         if not os.path.exists(video_path):
             print(f"Video not found at: {video_path}", file=sys.stderr)
             return jsonify({'error': f'Video not found. Please export first.'}), 404
 
-        print(f"✓ Serving video from: {video_path}", file=sys.stderr)
+        print(f"✓ Serving video from temp location: {video_path}", file=sys.stderr)
 
         # Send file with download prompt
-        return send_file(
+        response = send_file(
             video_path,
             mimetype='video/mp4',
             as_attachment=True,
             download_name=f"{project['name']}_{resolution}.mp4"
         )
+
+        # Delete the temp file after sending
+        try:
+            os.remove(video_path)
+            print(f"🧹 Cleaned up temp export: {video_path}", file=sys.stderr)
+        except Exception as cleanup_error:
+            print(f"⚠️ Failed to cleanup temp file: {cleanup_error}", file=sys.stderr)
+
+        return response
 
     except Exception as e:
         print(f"Error downloading video: {e}", file=sys.stderr)
